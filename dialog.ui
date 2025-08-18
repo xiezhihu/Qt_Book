@@ -89,12 +89,19 @@
          <item row="1" column="1" colspan="3">
           <layout class="QVBoxLayout" name="verticalLayout_2">
            <item>
-            <widget class="QLineEdit" name="lineUser"/>
+            <widget class="QLineEdit" name="lineUser">
+             <property name="placeholderText">
+              <string>请输入用户名</string>
+             </property>
+            </widget>
            </item>
            <item>
             <widget class="QLineEdit" name="linePwd">
              <property name="echoMode">
               <enum>QLineEdit::Password</enum>
+             </property>
+             <property name="placeholderText">
+              <string>请输入密码</string>
              </property>
             </widget>
            </item>
