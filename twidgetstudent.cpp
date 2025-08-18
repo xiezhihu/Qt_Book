@@ -77,8 +77,7 @@ void TWidgetStudent::iniTab0()
 
     //8.17 设置完代理，图片不显示
     TMyIconDelegate *delegate=new TMyIconDelegate(ui->tableView);
-    delegate->setEdit(false);
-    ui->tableView->setItemDelegateForColumn(rec.indexOf("image"),delegate);
+    ui->tableView->setItemDelegateForColumn(rec.indexOf("image_data"),delegate);
 
 
 
