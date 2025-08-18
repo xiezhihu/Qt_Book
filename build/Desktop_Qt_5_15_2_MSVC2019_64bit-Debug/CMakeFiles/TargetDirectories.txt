@@ -1,0 +1,8 @@
+D:/QtCreator_project/Project/Book3/build/Desktop_Qt_5_15_2_MSVC2019_64bit-Debug/CMakeFiles/Book3.dir
+D:/QtCreator_project/Project/Book3/build/Desktop_Qt_5_15_2_MSVC2019_64bit-Debug/CMakeFiles/edit_cache.dir
+D:/QtCreator_project/Project/Book3/build/Desktop_Qt_5_15_2_MSVC2019_64bit-Debug/CMakeFiles/rebuild_cache.dir
+D:/QtCreator_project/Project/Book3/build/Desktop_Qt_5_15_2_MSVC2019_64bit-Debug/CMakeFiles/list_install_components.dir
+D:/QtCreator_project/Project/Book3/build/Desktop_Qt_5_15_2_MSVC2019_64bit-Debug/CMakeFiles/install.dir
+D:/QtCreator_project/Project/Book3/build/Desktop_Qt_5_15_2_MSVC2019_64bit-Debug/CMakeFiles/install/local.dir
+D:/QtCreator_project/Project/Book3/build/Desktop_Qt_5_15_2_MSVC2019_64bit-Debug/CMakeFiles/Book3_autogen_timestamp_deps.dir
+D:/QtCreator_project/Project/Book3/build/Desktop_Qt_5_15_2_MSVC2019_64bit-Debug/CMakeFiles/Book3_autogen.dir
