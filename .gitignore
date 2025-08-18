@@ -1,0 +1,36 @@
+# Qt build artifacts
+build*/
+*.o
+*.obj
+*.exe
+*.dll
+*.so
+*.a
+*.lib
+*.ncb
+*.sdf
+*.suo
+*.pdb
+*.idb
+*.aps3
+*.ilk
+
+# Qt Creator user-specific files
+*.user
+*.user.*
+*.pro.user
+*.pro.user.*
+
+# Backup files
+*~
+*.autosave
+
+# CMake build directories
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Ninja build
+.ninja_log
+.ninja_deps
