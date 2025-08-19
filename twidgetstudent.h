@@ -34,6 +34,8 @@ private:
     QString currAuthor;
     QString currBookName;
     QString currCategory;
+    int rowCount;
+    const int MAXROW=15;
 
 private:
     int id;
@@ -68,6 +70,17 @@ private slots:
     void on_radioCategory_clicked(bool checked);
 
     void on_radioAuthor_clicked();
+
+
+    void on_spinPag_valueChanged(int arg1);
+
+    void on_btnLast_clicked();
+
+    void on_btnFirst_clicked();
+
+    void on_btnNext_clicked();
+
+    void on_btnEnd_clicked();
 
 private:
     Ui::TWidgetStudent *ui;

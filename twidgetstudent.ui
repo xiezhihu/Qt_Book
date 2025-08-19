@@ -1027,6 +1027,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="btnFirst">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="text">
                 <string>首页</string>
                </property>
@@ -1050,6 +1053,9 @@
              </item>
              <item>
               <widget class="QPushButton" name="btnLast">
+               <property name="enabled">
+                <bool>false</bool>
+               </property>
                <property name="text">
                 <string>上一页</string>
                </property>
@@ -1095,7 +1101,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="label_10">
+              <widget class="QLabel" name="labSum">
                <property name="text">
                 <string>页,共10页</string>
                </property>

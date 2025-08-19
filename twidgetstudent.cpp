@@ -121,8 +121,20 @@ void TWidgetStudent::on_btnMessage_clicked()
 void TWidgetStudent::on_btnquery_clicked()
 {
     queryModel=new QSqlQueryModel(ui->queryStackedWidget);
+    ui->queryTabView->setModel(queryModel);
     ui->radioAuthor->setChecked(true);
+
+    QSqlQuery *query = new QSqlQuery;
+    query->exec("SELECT COUNT(*) FROM books");
+    if(query->lastError().isValid()){
+        QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+        return ;
+    }
+    query->next();
+    rowCount=query->value(0).toInt();
     ui->tabWidget->setCurrentIndex(int(TabWidgetType::Query));
+    emit ui->radioAuthor->click();
+
 }
 
 
@@ -359,8 +371,7 @@ void TWidgetStudent::on_btnRepay_clicked()
 void TWidgetStudent::setQueryTabModel(int pag)
 {
     queryModel->setQuery("",this->DB);
-    int minPag=(pag-1)*10+1;
-    int maxPag=pag*10;
+    int start=(pag-1)*this->MAXROW;
     if(!currAuthor.isEmpty()){
         return ;
     }
@@ -374,29 +385,33 @@ void TWidgetStudent::setQueryTabModel(int pag)
     }
 
 
-    // 查询
-    QString sql=QString("SELECT books.image_data, books.title, books.author, books.total_count, books.return_count, books.press, books.category, NULL AS details"
+    // 查询全部
+    QString sql=QString("SELECT books.image_data, books.title, books.author, books.total_count, books.borrow_count, books.press, books.category, NULL AS details"
                           " FROM books"
-                          " LIMIT %1,%2").arg(minPag,maxPag);
+                          " LIMIT %1,%2").arg(start).arg(MAXROW);
     queryModel->setQuery(sql,this->DB);
-    QSqlRecord rec=queryModel->record();
+    if(queryModel->lastError().isValid()){
+        QMessageBox::critical(this,"错误","查询失败:"+queryModel->lastError().text());
+        return ;
+    }
 
+    QSqlRecord rec=queryModel->record();
     queryModel->setHeaderData(rec.indexOf("image_data"),Qt::Horizontal,"封面");
     queryModel->setHeaderData(rec.indexOf("title"),Qt::Horizontal,"书名");
     queryModel->setHeaderData(rec.indexOf("author"),Qt::Horizontal,"作者");
     queryModel->setHeaderData(rec.indexOf("total_count"),Qt::Horizontal,"总数");
-    queryModel->setHeaderData(rec.indexOf("return_count"),Qt::Horizontal,"剩余");
+    queryModel->setHeaderData(rec.indexOf("borrow_count"),Qt::Horizontal,"剩余");
     queryModel->setHeaderData(rec.indexOf("details"),Qt::Horizontal,"详细信息");
 
     //model/view   8.19刚设完代理
-    ui->queryTabView->setModel(queryModel);
     TMyIconDelegate *deledate=new TMyIconDelegate(ui->queryTabView);
     ui->queryTabView->setItemDelegateForColumn(rec.indexOf("image_data"),deledate);
 
-
-
     ui->queryTabView->setColumnHidden(rec.indexOf("press"),true);
     ui->queryTabView->setColumnHidden(rec.indexOf("category"),true);
+
+    ui->queryTabView->resizeColumnsToContents();
+    ui->queryTabView->resizeRowsToContents();
 }
 
 
@@ -406,6 +421,10 @@ void TWidgetStudent::on_radioAuthor_clicked()
     ui->lineSearch->clear();
     ui->lineSearch->setEnabled(true);
     ui->btnSearch->setEnabled(true);
+    ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::ShowData));
+    int pags=rowCount/MAXROW;
+    ui->labSum->setText(QString("页,共%1页").arg(rowCount%MAXROW?pags+1:pags));
+    ui->spinPag->setMaximum(rowCount%MAXROW?pags+1:pags);
     setQueryTabModel();
 }
 
@@ -421,4 +440,47 @@ void TWidgetStudent::on_radioCategory_clicked(bool checked)
     }
 }
 
+
+
+// 完成了这些
+
+//spinBox
+void TWidgetStudent::on_spinPag_valueChanged(int arg1)
+{
+    ui->btnFirst->setEnabled(arg1!=1);
+    ui->btnLast->setEnabled(arg1!=1);
+    int pags=rowCount/MAXROW;
+    ui->btnEnd->setEnabled(arg1!=rowCount%MAXROW?pags+1:pags);
+    ui->btnNext->setEnabled(arg1!=rowCount%MAXROW?pags+1:pags);
+
+    //更新数据
+    setQueryTabModel(arg1);
+}
+
+// 点击上一页
+void TWidgetStudent::on_btnLast_clicked()
+{
+    int curPag=ui->spinPag->value();
+    ui->spinPag->setValue(curPag-1);
+}
+
+// 点击首页
+void TWidgetStudent::on_btnFirst_clicked()
+{
+    ui->spinPag->setValue(1);
+}
+
+// 点击下一页
+void TWidgetStudent::on_btnNext_clicked()
+{
+    int curPag=ui->spinPag->value();
+    ui->spinPag->setValue(curPag+1);
+}
+
+// 点击尾页
+void TWidgetStudent::on_btnEnd_clicked()
+{
+    int pags=rowCount/MAXROW;
+    ui->spinPag->setValue(rowCount%MAXROW?pags+1:pags);
+}
 
