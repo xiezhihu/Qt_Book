@@ -29,14 +29,16 @@ private:
     qint64 number;
     int debt;
     QByteArray icon;
+
+    QSqlQueryModel *queryModel;
+    QString currAuthor;
+    QString currBookName;
+    QString currCategory;
+
 private:
     int id;
     void iniTabPerson();
-    void iniTabMessage();
-    void iniTabQuery();
-    void iniStackedPagMessage();
-    void iniStackedPagPassWord();
-    void iniStackedPagDebt();
+    void setQueryTabModel(int pag=1);
 
 public:
     explicit TWidgetStudent(int ID,QWidget *parent = nullptr);
@@ -64,6 +66,8 @@ private slots:
     void on_btnquery_clicked();
 
     void on_radioCategory_clicked(bool checked);
+
+    void on_radioAuthor_clicked();
 
 private:
     Ui::TWidgetStudent *ui;

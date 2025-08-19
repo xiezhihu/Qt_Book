@@ -1097,7 +1097,7 @@
              <item>
               <widget class="QLabel" name="label_10">
                <property name="text">
-                <string>页</string>
+                <string>页,共10页</string>
                </property>
               </widget>
              </item>

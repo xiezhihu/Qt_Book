@@ -100,84 +100,62 @@ void TWidgetStudent::iniTabPerson()
     delete query;
 }
 
-// 信息修改界面初始化
-void TWidgetStudent::iniTabMessage()
-{
-    ui->btnStackedPagMessage->click();
-}
-
-//图书查询界面初始化
-void TWidgetStudent::iniTabQuery()
-{
-
-}
-
-//信息修改界面——信息修改
-void TWidgetStudent::iniStackedPagMessage()
-{
-    //初始化数据
-
-    ui->lineMessageName->setText(this->name);
-    ui->lineMessageNumber->setText(QString::number(this->number));
-    QPixmap map;
-    map.loadFromData(this->icon);
-    ui->labelMessageIcon->setPixmap(map.scaled(300,300,Qt::KeepAspectRatio,Qt::SmoothTransformation));
-
-}
-
-//信息修改界面——密码修改
-void TWidgetStudent::iniStackedPagPassWord()
-{
-    ui->lineOriginPwd->clear();
-    ui->lineNewPwd->clear();
-    ui->lineAgainPwd->clear();
-}
-
-//信息修改界面——还款
-void TWidgetStudent::iniStackedPagDebt()
-{
-    ui->lineDebt->setReadOnly(true);
-    ui->lineDebt->setText(QString::number(this->debt));
-    ui->btnRepay->setEnabled(this->debt);
-}
-
+// 个人中心
 void TWidgetStudent::on_btnPerson_clicked()
 {
     iniTabPerson();
     ui->tabWidget->setCurrentIndex(int(TabWidgetType::Person));
 }
 
-
+// 修改信息
 void TWidgetStudent::on_btnMessage_clicked()
 {
-    iniTabMessage();
+    /**
+     * 刚开始界面就是个人信息界面，直接触发个人信息点击即可
+     */
+    ui->btnStackedPagMessage->click();
     ui->tabWidget->setCurrentIndex(int(TabWidgetType::Message));
 }
 
+//图书查询
 void TWidgetStudent::on_btnquery_clicked()
 {
-    iniTabQuery();
+    queryModel=new QSqlQueryModel(ui->queryStackedWidget);
+    ui->radioAuthor->setChecked(true);
     ui->tabWidget->setCurrentIndex(int(TabWidgetType::Query));
 }
+
+
+// 点击信息修改界面的信息修改
 void TWidgetStudent::on_btnStackedPagMessage_clicked()
 {
     /**
      * @brief iniStackedPagMessage
      * 初始化信息修改界面,因为信息可能会修改，所以不能写死，需要动态初始化
      */
-    iniStackedPagMessage();
+    ui->lineMessageName->setText(this->name);
+    ui->lineMessageNumber->setText(QString::number(this->number));
+    QPixmap map;
+    map.loadFromData(this->icon);
+    ui->labelMessageIcon->setPixmap(map.scaled(300,300,Qt::KeepAspectRatio,Qt::SmoothTransformation));
     ui->stackedWidget->setCurrentIndex(int(MessageStackWidgetType::Message));
 }
 
+//点击信息修改界面的密码修改
 void TWidgetStudent::on_btnStackedPagPassword_clicked()
 {
-    iniStackedPagPassWord();
+    ui->lineOriginPwd->clear();
+    ui->lineNewPwd->clear();
+    ui->lineAgainPwd->clear();
     ui->stackedWidget->setCurrentIndex(int(MessageStackWidgetType::Password));
 }
 
+// 点击信息修改界面的欠款
 void TWidgetStudent::on_btnStackedPagDebt_clicked()
 {
-    iniStackedPagDebt();
+    ui->lineDebt->setReadOnly(true);
+    ui->lineDebt->setText(QString::number(this->debt));
+    ui->btnRepay->setEnabled(this->debt);
     ui->stackedWidget->setCurrentIndex(int(MessageStackWidgetType::Debt));
 }
 
@@ -378,12 +356,69 @@ void TWidgetStudent::on_btnRepay_clicked()
     delete query;
 }
 
+void TWidgetStudent::setQueryTabModel(int pag)
+{
+    queryModel->setQuery("",this->DB);
+    int minPag=(pag-1)*10+1;
+    int maxPag=pag*10;
+    if(!currAuthor.isEmpty()){
+        return ;
+    }
+
+    if(!currBookName.isEmpty()){
+        return ;
+    }
+
+    if(!currCategory.isEmpty()){
+        return ;
+    }
+
+
+    // 查询
+    QString sql=QString("SELECT books.image_data, books.title, books.author, books.total_count, books.return_count, books.press, books.category, NULL AS details"
+                          " FROM books"
+                          " LIMIT %1,%2").arg(minPag,maxPag);
+    queryModel->setQuery(sql,this->DB);
+    QSqlRecord rec=queryModel->record();
+
+    queryModel->setHeaderData(rec.indexOf("image_data"),Qt::Horizontal,"封面");
+    queryModel->setHeaderData(rec.indexOf("title"),Qt::Horizontal,"书名");
+    queryModel->setHeaderData(rec.indexOf("author"),Qt::Horizontal,"作者");
+    queryModel->setHeaderData(rec.indexOf("total_count"),Qt::Horizontal,"总数");
+    queryModel->setHeaderData(rec.indexOf("return_count"),Qt::Horizontal,"剩余");
+    queryModel->setHeaderData(rec.indexOf("details"),Qt::Horizontal,"详细信息");
+
+    //model/view   8.19刚设完代理
+    ui->queryTabView->setModel(queryModel);
+    TMyIconDelegate *deledate=new TMyIconDelegate(ui->queryTabView);
+    ui->queryTabView->setItemDelegateForColumn(rec.indexOf("image_data"),deledate);
 
 
 
+    ui->queryTabView->setColumnHidden(rec.indexOf("press"),true);
+    ui->queryTabView->setColumnHidden(rec.indexOf("category"),true);
+}
+
+
+// 作者
+void TWidgetStudent::on_radioAuthor_clicked()
+{
+    ui->lineSearch->clear();
+    ui->lineSearch->setEnabled(true);
+    ui->btnSearch->setEnabled(true);
+    setQueryTabModel();
+}
+
+
+//分类
 void TWidgetStudent::on_radioCategory_clicked(bool checked)
 {
-    Q_UNUSED(checked);
-    ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::Category));
+    if(checked){
+        ui->lineSearch->setEnabled(false);
+        ui->btnSearch->setEnabled(false);
+        ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::Category));
+        return ;
+    }
 }
+
 
