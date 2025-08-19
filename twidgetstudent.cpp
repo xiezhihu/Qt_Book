@@ -2,7 +2,6 @@
 #include "ui_twidgetstudent.h"
 #include "tmyicondelegate.h"
 #include <QTabBar>
-#include <QtSql>
 #include <QMessageBox>
 #include <QDebug>
 #include <QFileDialog>
@@ -24,12 +23,12 @@ TWidgetStudent::~TWidgetStudent()
 }
 
 // 个人信息界面初始化
-void TWidgetStudent::iniTab0()
+void TWidgetStudent::iniTabPerson()
 {
     // 数据库连接,前面登陆界面已经连接过了，不用再连接，直接拿就可以
     QSqlDatabase DB=QSqlDatabase::database();
     QSqlQuery *query=new QSqlQuery(DB);
-    query->prepare("SELECT login.username, login.icon, login.debt, login.number FROM login WHERE login.id = :ID");
+    query->prepare("SELECT login.username, login.password login.icon, login.debt, login.number FROM login WHERE login.id = :ID");
     query->bindValue(":ID",id);
     bool ok=query->exec();
     if(!ok){
@@ -38,10 +37,13 @@ void TWidgetStudent::iniTab0()
         return ;
     }else{
         query->next();
+        QString Tpwd=query->value("password").toString();
         QString Tname=query->value("username").toString();
         qint64 Tnumber=query->value("number").toLongLong();
         QByteArray TiconData=query->value("icon").toByteArray();
         int Tdebt=query->value("debt").toInt();
+
+
         ui->labName->setText("姓名:"+Tname);
         ui->labid->setText("学号:"+QString::number(Tnumber));
         ui->labDebt->setText("欠款:"+QString::number(Tdebt));
@@ -49,6 +51,7 @@ void TWidgetStudent::iniTab0()
         map.loadFromData(TiconData);
         ui->labIcon->setPixmap(map.scaled(300,300,Qt::KeepAspectRatio,Qt::SmoothTransformation));
 
+        this->pwd=Tpwd;
         this->name=Tname;
         this->number=Tnumber;
         this->debt=Tdebt;
@@ -94,18 +97,18 @@ void TWidgetStudent::iniTab0()
     ui->tableView->setColumnHidden(rec.indexOf("book_id"),true);//设置隐藏
 
     delete query;
-    ui->tabWidget->setCurrentIndex(0);
+    ui->tabWidget->setCurrentIndex(int(TabWidgetType::Person));
 }
 
 // 信息修改界面初始化
-void TWidgetStudent::iniTab1()
+void TWidgetStudent::iniTabMessage()
 {
-    ui->tabWidget->setCurrentIndex(1);
-    ui->btnStackedPag0->click();
+    ui->tabWidget->setCurrentIndex(int(TabWidgetType::Message));
+    ui->btnStackedPagMessage->click();
 }
 
 //信息修改界面——信息修改
-void TWidgetStudent::iniStackedPag0()
+void TWidgetStudent::iniStackedPagMessage()
 {
     //初始化数据
 
@@ -115,25 +118,44 @@ void TWidgetStudent::iniStackedPag0()
     map.loadFromData(this->icon);
     ui->labelMessageIcon->setPixmap(map.scaled(300,300,Qt::KeepAspectRatio,Qt::SmoothTransformation));
 
-    ui->stackedWidget->setCurrentIndex(0);
 }
+
+//信息修改界面——密码修改
+void TWidgetStudent::iniStackedPagPassWord()
+{
+
+
+}
+
+
 
 void TWidgetStudent::on_btnPerson_clicked()
 {
-    iniTab0();
+    iniTabPerson();
 }
 
 
 void TWidgetStudent::on_btnMessage_clicked()
 {
-    iniTab1();
+    iniTabMessage();
 }
 
 
-void TWidgetStudent::on_btnStackedPag0_clicked()
+void TWidgetStudent::on_btnStackedPagMessage_clicked()
 {
-    iniStackedPag0();
+    /**
+     * @brief iniStackedPagMessage
+     * 初始化信息修改界面,因为信息可能会修改，所以不能写死，需要动态初始化
+     */
+    iniStackedPagMessage();
+    ui->stackedWidget->setCurrentIndex(int(StackWidgetType::Message));
 }
+
+void TWidgetStudent::on_btnStackedPagPassword_clicked()
+{
+    ui->stackedWidget->setCurrentIndex(int(StackWidgetType::Password));
+}
+
 
 // 设置头像
 void TWidgetStudent::on_btnMessageSetIcon_clicked()
@@ -242,5 +264,44 @@ void TWidgetStudent::on_btnMessageSave_clicked()
     this->icon=byte;
 
     delete query;
+}
+
+
+// 提交修改密码
+void TWidgetStudent::on_btnCommitPwd_clicked()
+{
+    // 获取数据
+    QString Tpwd=ui->lineOriginPwd->text();
+    QString Opwd=ui->lineNewPwd->text();
+    QString Apwd=ui->lineAgainPwd->text();
+
+    if(Tpwd.isEmpty()){
+        QMessageBox::information(this,"提示","原密码不为空！！！");
+        return ;
+    }
+    if(Opwd.isEmpty()){
+        QMessageBox::information(this,"提示","新密码不能为空！！！");
+        return ;
+    }
+    if(Apwd.isEmpty()){
+        QMessageBox::information(this,"提示","请再次确认密码！！！");
+        return ;
+    }
+
+    if(Opwd!=Apwd){
+        QMessageBox::information(this,"提示","两次密码不一致！！！");
+        return ;
+    }
+
+    if(Tpwd!=this->pwd){
+        QMessageBox::information(this,"提示","密码错误！！！");
+        return ;
+    }
+
+    // 修改密码
+    QSqlDatabase DB=QSqlDatabase::database();
+    QSqlQuery *query=new QSqlQuery(DB);
+
+
 }
 
