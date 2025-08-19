@@ -31,6 +31,7 @@ private:
     void iniTabMessage();
     void iniStackedPagMessage();
     void iniStackedPagPassWord();
+    void iniStackedPagDebt();
 
 public:
     explicit TWidgetStudent(int ID,QWidget *parent = nullptr);
@@ -49,8 +50,11 @@ private slots:
     void on_btnStackedPagPassword_clicked();
 
 
-
     void on_btnCommitPwd_clicked();
+
+    void on_btnStackedPagDebt_clicked();
+
+    void on_btnRepay_clicked();
 
 private:
     Ui::TWidgetStudent *ui;

@@ -130,7 +130,13 @@ void TWidgetStudent::iniStackedPagPassWord()
     ui->stackedWidget->setCurrentIndex(int(StackWidgetType::Password));
 }
 
-
+//信息修改界面——还款
+void TWidgetStudent::iniStackedPagDebt()
+{
+    ui->lineDebt->setReadOnly(true);
+    ui->lineDebt->setText(QString::number(this->debt));
+    ui->btnRepay->setEnabled(this->debt);
+}
 
 void TWidgetStudent::on_btnPerson_clicked()
 {
@@ -157,6 +163,12 @@ void TWidgetStudent::on_btnStackedPagMessage_clicked()
 void TWidgetStudent::on_btnStackedPagPassword_clicked()
 {
     ui->stackedWidget->setCurrentIndex(int(StackWidgetType::Password));
+}
+
+void TWidgetStudent::on_btnStackedPagDebt_clicked()
+{
+    iniStackedPagDebt();
+    ui->stackedWidget->setCurrentIndex(int(StackWidgetType::Debt));
 }
 
 
@@ -333,5 +345,26 @@ void TWidgetStudent::on_btnCommitPwd_clicked()
 
     delete query;
     return ;
+}
+
+//一键还款
+void TWidgetStudent::on_btnRepay_clicked()
+{
+    QSqlQuery *query=new QSqlQuery(DB);
+    query->prepare("UPDATE login"
+                   " SET login.debt = :debt"
+                   " WHERE login.id = :id");
+    query->bindValue(":debt",0);
+    query->bindValue(":id",this->id);
+    bool ok=query->exec();
+
+    if(ok){
+        ui->lineDebt->setText("0");
+        QMessageBox::information(this,"提示","还款成功！！！");
+        this->debt=0;
+    }else{
+        QMessageBox::critical(this,"错误","还款失败:"+query->lastError().text());
+    }
+    delete query;
 }
 
