@@ -15,9 +15,13 @@ class TWidgetStudent : public QWidget
     enum class TabWidgetType{
         Person=0,Message,Query,Quit
     };
-    enum class StackWidgetType{
+    enum class MessageStackWidgetType{
         Message=0,Password,Debt
     };
+    enum class QueryStackWidgetType{
+        ShowData=0,Category
+    };
+
 private:
     QSqlDatabase DB;
     QString pwd;
@@ -29,6 +33,7 @@ private:
     int id;
     void iniTabPerson();
     void iniTabMessage();
+    void iniTabQuery();
     void iniStackedPagMessage();
     void iniStackedPagPassWord();
     void iniStackedPagDebt();
@@ -55,6 +60,10 @@ private slots:
     void on_btnStackedPagDebt_clicked();
 
     void on_btnRepay_clicked();
+
+    void on_btnquery_clicked();
+
+    void on_radioCategory_clicked(bool checked);
 
 private:
     Ui::TWidgetStudent *ui;

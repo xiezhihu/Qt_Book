@@ -98,14 +98,18 @@ void TWidgetStudent::iniTabPerson()
     ui->tableView->setColumnHidden(rec.indexOf("book_id"),true);//设置隐藏
 
     delete query;
-    ui->tabWidget->setCurrentIndex(int(TabWidgetType::Person));
 }
 
 // 信息修改界面初始化
 void TWidgetStudent::iniTabMessage()
 {
-    ui->tabWidget->setCurrentIndex(int(TabWidgetType::Message));
     ui->btnStackedPagMessage->click();
+}
+
+//图书查询界面初始化
+void TWidgetStudent::iniTabQuery()
+{
+
 }
 
 //信息修改界面——信息修改
@@ -127,7 +131,6 @@ void TWidgetStudent::iniStackedPagPassWord()
     ui->lineOriginPwd->clear();
     ui->lineNewPwd->clear();
     ui->lineAgainPwd->clear();
-    ui->stackedWidget->setCurrentIndex(int(StackWidgetType::Password));
 }
 
 //信息修改界面——还款
@@ -141,15 +144,21 @@ void TWidgetStudent::iniStackedPagDebt()
 void TWidgetStudent::on_btnPerson_clicked()
 {
     iniTabPerson();
+    ui->tabWidget->setCurrentIndex(int(TabWidgetType::Person));
 }
 
 
 void TWidgetStudent::on_btnMessage_clicked()
 {
     iniTabMessage();
+    ui->tabWidget->setCurrentIndex(int(TabWidgetType::Message));
 }
 
-
+void TWidgetStudent::on_btnquery_clicked()
+{
+    iniTabQuery();
+    ui->tabWidget->setCurrentIndex(int(TabWidgetType::Query));
+}
 void TWidgetStudent::on_btnStackedPagMessage_clicked()
 {
     /**
@@ -157,18 +166,19 @@ void TWidgetStudent::on_btnStackedPagMessage_clicked()
      * 初始化信息修改界面,因为信息可能会修改，所以不能写死，需要动态初始化
      */
     iniStackedPagMessage();
-    ui->stackedWidget->setCurrentIndex(int(StackWidgetType::Message));
+    ui->stackedWidget->setCurrentIndex(int(MessageStackWidgetType::Message));
 }
 
 void TWidgetStudent::on_btnStackedPagPassword_clicked()
 {
-    ui->stackedWidget->setCurrentIndex(int(StackWidgetType::Password));
+    iniStackedPagPassWord();
+    ui->stackedWidget->setCurrentIndex(int(MessageStackWidgetType::Password));
 }
 
 void TWidgetStudent::on_btnStackedPagDebt_clicked()
 {
     iniStackedPagDebt();
-    ui->stackedWidget->setCurrentIndex(int(StackWidgetType::Debt));
+    ui->stackedWidget->setCurrentIndex(int(MessageStackWidgetType::Debt));
 }
 
 
@@ -366,5 +376,14 @@ void TWidgetStudent::on_btnRepay_clicked()
         QMessageBox::critical(this,"错误","还款失败:"+query->lastError().text());
     }
     delete query;
+}
+
+
+
+
+void TWidgetStudent::on_radioCategory_clicked(bool checked)
+{
+    Q_UNUSED(checked);
+    ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::Category));
 }
 
