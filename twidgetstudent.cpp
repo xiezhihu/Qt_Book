@@ -15,6 +15,9 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
     this->setAttribute(Qt::WA_DeleteOnClose);
     ui->tabWidget->tabBar()->hide(); //隐藏标签
     ui->btnPerson->click();
+
+    // 数据库连接,前面登陆界面已经连接过了，不用再连接，直接拿就可以
+    DB=QSqlDatabase::database();
 }
 
 TWidgetStudent::~TWidgetStudent()
@@ -25,10 +28,8 @@ TWidgetStudent::~TWidgetStudent()
 // 个人信息界面初始化
 void TWidgetStudent::iniTabPerson()
 {
-    // 数据库连接,前面登陆界面已经连接过了，不用再连接，直接拿就可以
-    QSqlDatabase DB=QSqlDatabase::database();
     QSqlQuery *query=new QSqlQuery(DB);
-    query->prepare("SELECT login.username, login.password login.icon, login.debt, login.number FROM login WHERE login.id = :ID");
+    query->prepare("SELECT login.username, login.password, login.icon, login.debt, login.number FROM login WHERE login.id = :ID");
     query->bindValue(":ID",id);
     bool ok=query->exec();
     if(!ok){
@@ -123,8 +124,10 @@ void TWidgetStudent::iniStackedPagMessage()
 //信息修改界面——密码修改
 void TWidgetStudent::iniStackedPagPassWord()
 {
-
-
+    ui->lineOriginPwd->clear();
+    ui->lineNewPwd->clear();
+    ui->lineAgainPwd->clear();
+    ui->stackedWidget->setCurrentIndex(int(StackWidgetType::Password));
 }
 
 
@@ -195,7 +198,7 @@ void TWidgetStudent::on_btnMessageSave_clicked()
 
 
     // 保存
-    QSqlDatabase DB=QSqlDatabase::database();
+    // QSqlDatabase DB=QSqlDatabase::database();
     DB.transaction(); //开启事务
 
 
@@ -271,16 +274,19 @@ void TWidgetStudent::on_btnMessageSave_clicked()
 void TWidgetStudent::on_btnCommitPwd_clicked()
 {
     // 获取数据
-    QString Tpwd=ui->lineOriginPwd->text();
-    QString Opwd=ui->lineNewPwd->text();
+    QString Opwd=ui->lineOriginPwd->text();
+    QString Npwd=ui->lineNewPwd->text();
     QString Apwd=ui->lineAgainPwd->text();
 
-    if(Tpwd.isEmpty()){
+    if(Opwd.isEmpty()){
         QMessageBox::information(this,"提示","原密码不为空！！！");
+        ui->lineNewPwd->clear();
+        ui->lineAgainPwd->clear();
         return ;
     }
-    if(Opwd.isEmpty()){
+    if(Npwd.isEmpty()){
         QMessageBox::information(this,"提示","新密码不能为空！！！");
+        ui->lineAgainPwd->clear();
         return ;
     }
     if(Apwd.isEmpty()){
@@ -288,20 +294,44 @@ void TWidgetStudent::on_btnCommitPwd_clicked()
         return ;
     }
 
-    if(Opwd!=Apwd){
+    if(Npwd!=Apwd){
         QMessageBox::information(this,"提示","两次密码不一致！！！");
         return ;
     }
 
-    if(Tpwd!=this->pwd){
+    if(Opwd!=this->pwd){
         QMessageBox::information(this,"提示","密码错误！！！");
+        ui->lineNewPwd->clear();
+        ui->lineAgainPwd->clear();
+        return ;
+    }
+
+    if(Opwd==Npwd){
+        QMessageBox::information(this,"提示","新密码和原密码一致!!!");
         return ;
     }
 
     // 修改密码
-    QSqlDatabase DB=QSqlDatabase::database();
     QSqlQuery *query=new QSqlQuery(DB);
+    query->prepare("UPDATE login"
+                   " SET login.password = :Npwd"
+                   " WHERE login.id = :id");
+    query->bindValue(":Npwd",Npwd);
+    query->bindValue(":id",this->id);
+    bool ok=query->exec();
+    if(!ok){
+        QMessageBox::information(this,"提示","修改失败:"+query->lastError().text());
 
+    }else{
+        QMessageBox::information(this,"提示","修改成功");
+        this->pwd=Npwd;
+    }
 
+    ui->lineOriginPwd->clear();
+    ui->lineNewPwd->clear();
+    ui->lineAgainPwd->clear();
+
+    delete query;
+    return ;
 }
 
