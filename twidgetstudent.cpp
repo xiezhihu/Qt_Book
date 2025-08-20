@@ -22,6 +22,14 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
     DB=QSqlDatabase::database();
     query=new QSqlQuery(DB);
     iconDelegate =new TMyIconDelegate(this);
+    btnDelegate =new QPushButton("详情",this);
+    btnDelegate->setFlat(true);
+    // 8.20 刚设置完鼠标样式变化
+    btnDelegate->setStyleSheet("QPushButton { color: blue; background-color: transparent; border: none;}"
+                      "QPushButton:hover {font-weight:bold; background-color: lightgray;}");
+
+    btnDelegate->setCursor(Qt::PointingHandCursor);
+
 
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
 
@@ -126,11 +134,12 @@ void TWidgetStudent::iniTabPerson()
         item->setText(TreturnDate);
         itemList.append(item);
 
-        item=new QStandardItem();
-        item->setText("详细信息");
-        itemList.append(item);
 
         borrowItemModel->appendRow(itemList);
+    }
+    for(int i=0;i<borrowItemModel->rowCount();i++){
+        QModelIndex index=borrowItemModel->index(i,BORROWMAXCOLUMN-1);
+        ui->tableView->setIndexWidget(index,btnDelegate);
     }
     ui->tableView->resizeColumnsToContents();
     ui->tableView->resizeRowsToContents();

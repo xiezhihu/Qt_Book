@@ -5,6 +5,7 @@
 #include <QWidget>
 #include <QtSql>
 #include <QStandardItemModel>
+#include <QPushButton>
 
 
 namespace Ui {
@@ -28,6 +29,7 @@ private:
     QSqlQuery *query;
     QSqlDatabase DB;
     TMyIconDelegate *iconDelegate;
+    QPushButton *btnDelegate;
     QString pwd;
     QString name;
     qint64 number;
