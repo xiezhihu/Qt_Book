@@ -1,10 +1,14 @@
 #include "twidgetstudent.h"
 #include "ui_twidgetstudent.h"
-#include "tmyicondelegate.h"
 #include <QTabBar>
 #include <QMessageBox>
 #include <QDebug>
 #include <QFileDialog>
+#include <QStandardItem>
+#include <QStandardItemModel>
+#define BORROWMAXCOLUMN 6
+#define QUERYMAXROW 15
+#define QUERYMAXCOLUMN 6
 
 
 TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
@@ -14,10 +18,15 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
     ui->setupUi(this);
     this->setAttribute(Qt::WA_DeleteOnClose);
     ui->tabWidget->tabBar()->hide(); //隐藏标签
-    ui->btnPerson->click();
-
     // 数据库连接,前面登陆界面已经连接过了，不用再连接，直接拿就可以
     DB=QSqlDatabase::database();
+    query=new QSqlQuery(DB);
+    iconDelegate =new TMyIconDelegate(this);
+
+    ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
+
+    ui->btnPerson->click();
+
 }
 
 TWidgetStudent::~TWidgetStudent()
@@ -28,7 +37,6 @@ TWidgetStudent::~TWidgetStudent()
 // 个人信息界面初始化
 void TWidgetStudent::iniTabPerson()
 {
-    QSqlQuery *query=new QSqlQuery(DB);
     query->prepare("SELECT login.username, login.password, login.icon, login.debt, login.number FROM login WHERE login.id = :ID");
     query->bindValue(":ID",id);
     bool ok=query->exec();
@@ -61,43 +69,72 @@ void TWidgetStudent::iniTabPerson()
 
 
     //query
-    QSqlQueryModel *queryModel=new QSqlQueryModel(ui->tableView);
-    QString sql = R"(
+    query->prepare(R"(
     SELECT login.id, borrow.book_id, books.image_data,  books.title, books.author, books.press, borrow.borrow_date, borrow.return_date
     FROM login
     JOIN borrow ON login.id = borrow.user_id
     JOIN books ON borrow.book_id = books.id
-    WHERE login.id = %1
-    )";
-    queryModel->setQuery(sql.arg(id),DB);
-    if(queryModel->lastError().isValid()){
-        QMessageBox::critical(this,"错误","查询失败:"+queryModel->lastError().text());
+    WHERE login.id = :id
+    )");
+    query->bindValue(":id",this->id);
+    ok=query->exec();
+
+    if(!ok){
+        QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
         delete query;
         return ;
     }
 
-    //设置表头
-    QSqlRecord rec=queryModel->record();
-    queryModel->setHeaderData(rec.indexOf("image_data"),Qt::Horizontal,"封面");
-    queryModel->setHeaderData(rec.indexOf("title"),Qt::Horizontal,"书名");
-    queryModel->setHeaderData(rec.indexOf("author"),Qt::Horizontal,"作者");
-    queryModel->setHeaderData(rec.indexOf("press"),Qt::Horizontal,"出版社");
-    queryModel->setHeaderData(rec.indexOf("borrow_date"),Qt::Horizontal,"借阅时间");
-    queryModel->setHeaderData(rec.indexOf("return_date"),Qt::Horizontal,"预计还书日期");
-
-
     //model/view
-    TMyIconDelegate *delegate=new TMyIconDelegate(ui->tableView);
-    ui->tableView->setItemDelegateForColumn(rec.indexOf("image_data"),delegate);
+    borrowItemModel = new QStandardItemModel(0,BORROWMAXCOLUMN,this);
+    QStringList strList;
+    strList<<"封面"<<"书名"<<"作者"<<"借阅日期"<<"预计还书日期"<<"详情信息";
+    borrowItemModel->setHorizontalHeaderLabels(strList);
+    ui->tableView->setModel(borrowItemModel);
+    ui->tableView->setItemDelegateForColumn(0,iconDelegate);
+
+    // 设置数据
+    QStandardItem *item;
+    QList<QStandardItem*> itemList;
+    while(query->next()){
+        QByteArray Ticon=query->value("image_data").toByteArray();
+        QString TbookName=query->value("title").toString();
+        QString Tauthor=query->value("author").toString();
+        QString TborrowDate=query->value("borrow_date").toDateTime().toString("yyyy-MM-dd hh:mm:ss");
+        QString TreturnDate=query->value("return_date").toDateTime().toString("yyyy-MM-dd hh:mm:ss");
 
 
-    ui->tableView->setModel(queryModel);
+        itemList.clear();
+
+        item=new QStandardItem();
+        item->setData(Ticon,Qt::DisplayRole);
+        itemList.append(item);
+
+        item=new QStandardItem();
+        item->setText(TbookName);
+        itemList.append(item);
+
+        item=new QStandardItem();
+        item->setText(Tauthor);
+        itemList.append(item);
+
+        item=new QStandardItem();
+        item->setText(TborrowDate);
+        itemList.append(item);
+
+        item=new QStandardItem();
+        item->setText(TreturnDate);
+        itemList.append(item);
+
+        item=new QStandardItem();
+        item->setText("详细信息");
+        itemList.append(item);
+
+        borrowItemModel->appendRow(itemList);
+    }
     ui->tableView->resizeColumnsToContents();
     ui->tableView->resizeRowsToContents();
-    ui->tableView->setColumnHidden(rec.indexOf("id"),true);//设置隐藏
-    ui->tableView->setColumnHidden(rec.indexOf("book_id"),true);//设置隐藏
 
-    delete query;
 }
 
 // 个人中心
@@ -120,8 +157,9 @@ void TWidgetStudent::on_btnMessage_clicked()
 //图书查询
 void TWidgetStudent::on_btnquery_clicked()
 {
-    queryModel=new QSqlQueryModel(ui->queryStackedWidget);
-    ui->queryTabView->setModel(queryModel);
+
+    queryItemModel = new QStandardItemModel(QUERYMAXROW,QUERYMAXCOLUMN,ui->queryTabView);
+    ui->queryTabView->setModel(queryItemModel);
     ui->radioAuthor->setChecked(true);
 
     QSqlQuery *query = new QSqlQuery;
@@ -370,8 +408,7 @@ void TWidgetStudent::on_btnRepay_clicked()
 
 void TWidgetStudent::setQueryTabModel(int pag)
 {
-    queryModel->setQuery("",this->DB);
-    int start=(pag-1)*this->MAXROW;
+    int start=(pag-1)*QUERYMAXROW;
     if(!currAuthor.isEmpty()){
         return ;
     }
@@ -388,30 +425,13 @@ void TWidgetStudent::setQueryTabModel(int pag)
     // 查询全部
     QString sql=QString("SELECT books.image_data, books.title, books.author, books.total_count, books.borrow_count, books.press, books.category, NULL AS details"
                           " FROM books"
-                          " LIMIT %1,%2").arg(start).arg(MAXROW);
-    queryModel->setQuery(sql,this->DB);
-    if(queryModel->lastError().isValid()){
-        QMessageBox::critical(this,"错误","查询失败:"+queryModel->lastError().text());
+                          " LIMIT %1,%2").arg(start).arg(QUERYMAXROW);
+    bool ok=query->exec();
+    if(!ok){
+        QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
         return ;
     }
 
-    QSqlRecord rec=queryModel->record();
-    queryModel->setHeaderData(rec.indexOf("image_data"),Qt::Horizontal,"封面");
-    queryModel->setHeaderData(rec.indexOf("title"),Qt::Horizontal,"书名");
-    queryModel->setHeaderData(rec.indexOf("author"),Qt::Horizontal,"作者");
-    queryModel->setHeaderData(rec.indexOf("total_count"),Qt::Horizontal,"总数");
-    queryModel->setHeaderData(rec.indexOf("borrow_count"),Qt::Horizontal,"剩余");
-    queryModel->setHeaderData(rec.indexOf("details"),Qt::Horizontal,"详细信息");
-
-    //model/view   8.19刚设完代理
-    TMyIconDelegate *deledate=new TMyIconDelegate(ui->queryTabView);
-    ui->queryTabView->setItemDelegateForColumn(rec.indexOf("image_data"),deledate);
-
-    ui->queryTabView->setColumnHidden(rec.indexOf("press"),true);
-    ui->queryTabView->setColumnHidden(rec.indexOf("category"),true);
-
-    ui->queryTabView->resizeColumnsToContents();
-    ui->queryTabView->resizeRowsToContents();
 }
 
 
@@ -422,9 +442,9 @@ void TWidgetStudent::on_radioAuthor_clicked()
     ui->lineSearch->setEnabled(true);
     ui->btnSearch->setEnabled(true);
     ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::ShowData));
-    int pags=rowCount/MAXROW;
-    ui->labSum->setText(QString("页,共%1页").arg(rowCount%MAXROW?pags+1:pags));
-    ui->spinPag->setMaximum(rowCount%MAXROW?pags+1:pags);
+    int pags=rowCount/QUERYMAXROW;
+    ui->labSum->setText(QString("页,共%1页").arg(rowCount%QUERYMAXROW?pags+1:pags));
+    ui->spinPag->setMaximum(rowCount%QUERYMAXROW?pags+1:pags);
     setQueryTabModel();
 }
 
@@ -449,9 +469,9 @@ void TWidgetStudent::on_spinPag_valueChanged(int arg1)
 {
     ui->btnFirst->setEnabled(arg1!=1);
     ui->btnLast->setEnabled(arg1!=1);
-    int pags=rowCount/MAXROW;
-    ui->btnEnd->setEnabled(arg1!=rowCount%MAXROW?pags+1:pags);
-    ui->btnNext->setEnabled(arg1!=rowCount%MAXROW?pags+1:pags);
+    int pags=rowCount/QUERYMAXROW;
+    ui->btnEnd->setEnabled(arg1!=rowCount%QUERYMAXROW?pags+1:pags);
+    ui->btnNext->setEnabled(arg1!=rowCount%QUERYMAXROW?pags+1:pags);
 
     //更新数据
     setQueryTabModel(arg1);
@@ -480,7 +500,7 @@ void TWidgetStudent::on_btnNext_clicked()
 // 点击尾页
 void TWidgetStudent::on_btnEnd_clicked()
 {
-    int pags=rowCount/MAXROW;
-    ui->spinPag->setValue(rowCount%MAXROW?pags+1:pags);
+    int pags=rowCount/QUERYMAXROW;
+    ui->spinPag->setValue(rowCount%QUERYMAXROW?pags+1:pags);
 }
 

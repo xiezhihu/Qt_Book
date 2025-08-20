@@ -1,6 +1,5 @@
 #include "tmyicondelegate.h"
 #include <QLabel>
-#include <QtSql>
 #include <QPainter>
 
 TMyIconDelegate::TMyIconDelegate(QWidget *parent) {}

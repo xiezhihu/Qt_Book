@@ -1,8 +1,10 @@
 #ifndef TWIDGETSTUDENT_H
 #define TWIDGETSTUDENT_H
 
+#include "tmyicondelegate.h"
 #include <QWidget>
 #include <QtSql>
+#include <QStandardItemModel>
 
 
 namespace Ui {
@@ -23,19 +25,22 @@ class TWidgetStudent : public QWidget
     };
 
 private:
+    QSqlQuery *query;
     QSqlDatabase DB;
+    TMyIconDelegate *iconDelegate;
     QString pwd;
     QString name;
     qint64 number;
     int debt;
     QByteArray icon;
 
-    QSqlQueryModel *queryModel;
+    QStandardItemModel *borrowItemModel;
+    QStandardItemModel *queryItemModel;
     QString currAuthor;
     QString currBookName;
     QString currCategory;
     int rowCount;
-    const int MAXROW=15;
+
 
 private:
     int id;
