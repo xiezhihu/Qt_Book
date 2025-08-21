@@ -25,7 +25,9 @@ class TWidgetStudent : public QWidget
         ShowData=0,Category
     };
 
+
 private:
+    QTimer *timer;
     QSqlQuery *query;
     QSqlDatabase DB;
     TMyIconDelegate *iconDelegate;
@@ -48,6 +50,8 @@ private:
     int id;
     void iniTabPerson();
     void setQueryTabModel(int pag=1);
+    void do_BorrowDetailClicked();
+    void do_timeOut();
 
 public:
     explicit TWidgetStudent(int ID,QWidget *parent = nullptr);

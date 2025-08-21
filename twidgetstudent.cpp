@@ -1,12 +1,14 @@
 #include "twidgetstudent.h"
 #include "ui_twidgetstudent.h"
+#include "borrowdetaildialog.h"
 #include <QTabBar>
 #include <QMessageBox>
 #include <QDebug>
 #include <QFileDialog>
 #include <QStandardItem>
 #include <QStandardItemModel>
-#define BORROWMAXCOLUMN 6
+#include <QTimer>
+#define BORROWMAXCOLUMN 7
 #define QUERYMAXROW 15
 #define QUERYMAXCOLUMN 6
 
@@ -16,6 +18,7 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
     , ui(new Ui::TWidgetStudent)
 {
     ui->setupUi(this);
+
     this->setAttribute(Qt::WA_DeleteOnClose);
     ui->tabWidget->tabBar()->hide(); //隐藏标签
     // 数据库连接,前面登陆界面已经连接过了，不用再连接，直接拿就可以
@@ -24,6 +27,12 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
     iconDelegate =new TMyIconDelegate(this);
     btnDelegate =new QPushButton("详情",this);
     btnDelegate->setFlat(true);
+
+
+    timer=new QTimer(this);
+    timer->setTimerType(Qt::CoarseTimer);
+    timer->start(1000);
+    connect(timer,&QTimer::timeout,this,&TWidgetStudent::do_timeOut);
 
     // 8.20 刚设置完鼠标样式变化
     btnDelegate->setStyleSheet("QPushButton { color: blue; background-color: transparent; border: none;}"
@@ -39,6 +48,53 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
 TWidgetStudent::~TWidgetStudent()
 {
     delete ui;
+}
+
+// 响应借阅信息
+void TWidgetStudent::do_BorrowDetailClicked()
+{
+
+
+    QModelIndex index=ui->tableView->currentIndex();
+    int Tborrow_id=index.data(Qt::UserRole+1).toInt();
+    qDebug()<<Tborrow_id;
+    BorrowDetailDialog *borrowDetail=new BorrowDetailDialog(Tborrow_id,this);
+    borrowDetail->show();
+
+
+}
+
+// 及时更新数据库  8.21
+void TWidgetStudent::do_timeOut()
+{
+    qDebug()<<"对齐";
+    QDateTime curTime=QDateTime::currentDateTime();
+
+    bool ok=query->exec("SELECT borrow.borrow_id, borrow.return_date, borrow.status"
+                          " FROM borrow");
+    if(!ok){
+        QMessageBox::critical(this,"错误","数据库查询失败:"+query->lastError().text());
+    }
+
+    while(query->next()){
+        int Tborrow_id=query->value("borrow_id").toInt();
+        QString curStatus=query->value("status").toString();
+        QDateTime TreturnTime=query->value("return_date").toDateTime();
+        if(curStatus=="NORMAL" && curTime>TreturnTime){
+            query->prepare("UPDATE borrow"
+                           " SET status = 'TIMEOUT' "
+                           " WHERE borrow_id = :Tborrow_id");
+            query->bindValue(":Tborrow_id",Tborrow_id);
+            ok=query->exec();
+            if(!ok){
+                QMessageBox::critical(this,"错误","数据库更新失败:"+query->lastError().text());
+            }else{
+                qDebug()<<"数据库更新成功";
+            }
+        }
+    }
+
+
 }
 
 // 个人信息界面初始化
@@ -77,7 +133,7 @@ void TWidgetStudent::iniTabPerson()
 
     //query
     query->prepare(R"(
-    SELECT login.id, borrow.book_id, books.image_data,  books.title, books.author, books.press, borrow.borrow_date, borrow.return_date
+    SELECT login.id, borrow.book_id, borrow.borrow_id, borrow.status, books.image_data,  books.title, books.author, borrow.borrow_date, borrow.return_date
     FROM login
     JOIN borrow ON login.id = borrow.user_id
     JOIN books ON borrow.book_id = books.id
@@ -95,7 +151,7 @@ void TWidgetStudent::iniTabPerson()
     //model/view
     borrowItemModel = new QStandardItemModel(0,BORROWMAXCOLUMN,this);
     QStringList strList;
-    strList<<"封面"<<"书名"<<"作者"<<"借阅日期"<<"预计还书日期"<<"详情信息";
+    strList<<"封面"<<"书名"<<"作者"<<"借阅日期"<<"预计还书日期"<<"状态"<<"详情信息";
     borrowItemModel->setHorizontalHeaderLabels(strList);
     ui->tableView->setModel(borrowItemModel);
     ui->tableView->setItemDelegateForColumn(0,iconDelegate);
@@ -103,12 +159,16 @@ void TWidgetStudent::iniTabPerson()
     // 设置数据
     QStandardItem *item;
     QList<QStandardItem*> itemList;
+    int curRow=0;
     while(query->next()){
         QByteArray Ticon=query->value("image_data").toByteArray();
         QString TbookName=query->value("title").toString();
         QString Tauthor=query->value("author").toString();
-        QString TborrowDate=query->value("borrow_date").toDateTime().toString("yyyy-MM-dd hh:mm:ss");
-        QString TreturnDate=query->value("return_date").toDateTime().toString("yyyy-MM-dd hh:mm:ss");
+        QString TborrowTime=query->value("borrow_date").toDateTime().toString("yyyy-MM-dd hh:mm:ss");
+        QString TreturnTime=query->value("return_date").toDateTime().toString("yyyy-MM-dd hh:mm:ss");
+        QString Tstatus=query->value("status").toString();
+        int Tborrow_id=query->value("borrow_id").toInt();
+
 
 
         itemList.clear();
@@ -126,23 +186,28 @@ void TWidgetStudent::iniTabPerson()
         itemList.append(item);
 
         item=new QStandardItem();
-        item->setText(TborrowDate);
+        item->setText(TborrowTime);
         itemList.append(item);
 
         item=new QStandardItem();
-        item->setText(TreturnDate);
+        item->setText(TreturnTime);
         itemList.append(item);
 
+        item=new QStandardItem();
+        QString text=Tstatus=="NORMAL"?"正常":"逾期";
+        item->setText(text);
+        itemList.append(item);
 
         borrowItemModel->appendRow(itemList);
-    }
-    for(int i=0;i<borrowItemModel->rowCount();i++){
-        QModelIndex index=borrowItemModel->index(i,BORROWMAXCOLUMN-1);
+
+        QModelIndex index=borrowItemModel->index(curRow,BORROWMAXCOLUMN-1);
+        borrowItemModel->setData(index,Tborrow_id,Qt::UserRole+1);
         ui->tableView->setIndexWidget(index,btnDelegate);
+        curRow++;
     }
     ui->tableView->resizeColumnsToContents();
     ui->tableView->resizeRowsToContents();
-    // connect(btnDelegate,&QPushButton::clicked,this,&TWidgetStudent::)
+    connect(btnDelegate,&QPushButton::clicked,this,&TWidgetStudent::do_BorrowDetailClicked);
 }
 
 // 个人中心
@@ -441,6 +506,7 @@ void TWidgetStudent::setQueryTabModel(int pag)
     }
 
 }
+
 
 
 // 作者

@@ -42,6 +42,7 @@ else()
             icon.qrc
             twidgetstudent.h twidgetstudent.cpp twidgetstudent.ui
             tmyicondelegate.h tmyicondelegate.cpp
+            borrowdetaildialog.h borrowdetaildialog.cpp borrowdetaildialog.ui
         )
     endif()
 endif()
