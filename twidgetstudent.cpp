@@ -24,6 +24,7 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
     iconDelegate =new TMyIconDelegate(this);
     btnDelegate =new QPushButton("详情",this);
     btnDelegate->setFlat(true);
+
     // 8.20 刚设置完鼠标样式变化
     btnDelegate->setStyleSheet("QPushButton { color: blue; background-color: transparent; border: none;}"
                       "QPushButton:hover {font-weight:bold; background-color: lightgray;}");
@@ -32,9 +33,7 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
 
 
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
-
     ui->btnPerson->click();
-
 }
 
 TWidgetStudent::~TWidgetStudent()
@@ -143,7 +142,7 @@ void TWidgetStudent::iniTabPerson()
     }
     ui->tableView->resizeColumnsToContents();
     ui->tableView->resizeRowsToContents();
-
+    // connect(btnDelegate,&QPushButton::clicked,this,&TWidgetStudent::)
 }
 
 // 个人中心
