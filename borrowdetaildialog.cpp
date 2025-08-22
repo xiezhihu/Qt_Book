@@ -62,7 +62,8 @@ BorrowDetailDialog::BorrowDetailDialog(int borrow_id,QWidget *parent)
 
     this->setAttribute(Qt::WA_DeleteOnClose);
     this->setModal(true);
-    this->setFixedSize(1165,367);
+    this->adjustSize();
+    this->setFixedSize(this->size());
 }
 
 BorrowDetailDialog::~BorrowDetailDialog()
@@ -116,15 +117,41 @@ void BorrowDetailDialog::on_btnBorrow_clicked()
 // 一键还书
 void BorrowDetailDialog::on_btnReturn_clicked()
 {
+    DB.transaction();
+
+    // 查询获取bookid
+    query->prepare("SELECT book_id"
+                   " FROM borrow"
+                   " WHERE borrow_id = :borrow_id");
+    query->bindValue(":borrow_id",this->borrow_id);
+    bool select=query->exec();
+    query->next();
+    int bookID=query->value("book_id").toInt();
+
+
+    // 删除借阅记录
     query->prepare("DELETE FROM borrow"
                    " WHERE borrow_id = :borrow_id");
     query->bindValue(":borrow_id",this->borrow_id);
-    bool ok=query->exec();
-    if(ok){
+    bool dele=query->exec();
+
+
+    // 更新可借阅数量
+    query->prepare("UPDATE books"
+                   " SET borrow_count = borrow_count+1"
+                   " WHERE id = :bookID");
+    query->bindValue(":bookID",bookID);
+    bool upBorrowCount=query->exec();
+
+
+
+    if(dele && select && upBorrowCount){
         QMessageBox::information(this,"提示","还书成功");
+        DB.commit();
         this->accept();  //接受
     }else{
         QMessageBox::information(this,"提示","还书失败");
+        DB.rollback();
     }
 }
 

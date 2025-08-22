@@ -43,6 +43,7 @@ else()
             twidgetstudent.h twidgetstudent.cpp twidgetstudent.ui
             tmyicondelegate.h tmyicondelegate.cpp
             borrowdetaildialog.h borrowdetaildialog.cpp borrowdetaildialog.ui
+            querydetaildialog.h querydetaildialog.cpp querydetaildialog.ui
         )
     endif()
 endif()

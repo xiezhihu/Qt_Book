@@ -1,6 +1,7 @@
 #include "twidgetstudent.h"
 #include "ui_twidgetstudent.h"
 #include "borrowdetaildialog.h"
+#include "querydetaildialog.h"
 #include <QTabBar>
 #include <QMessageBox>
 #include <QDebug>
@@ -504,7 +505,7 @@ void TWidgetStudent::setQueryTabModel(int pag)
 
 
 
-    //model/view
+    //model/view  8.22完成了图书查询的详情
     QStandardItemModel *queryItemModel = new QStandardItemModel(0,QUERYMAXCOLUMN,ui->queryTabView);
     QStringList strList;
     strList<<"封面"<<"书名"<<"作者"<<"总数"<<"可借阅数"<<"详细信息";
@@ -564,6 +565,16 @@ void TWidgetStudent::setQueryTabModel(int pag)
         queryItemModel->setData(index,Tbookid,Qt::UserRole+1);
         ui->queryTabView->setIndexWidget(index,btnDelegate);
         curRow++;
+
+        connect(btnDelegate,&QPushButton::clicked,this,[=]()->void{
+            QModelIndex index=ui->queryTabView->currentIndex();
+            int TbookID=index.data(Qt::UserRole+1).toInt();
+            QueryDetailDialog *detailDialog = new QueryDetailDialog(TbookID,this->id,ui->queryTabView);
+            detailDialog->show();
+            if(detailDialog->exec()==QDialog::Accepted){
+                setQueryTabModel(pag);
+            }
+        });
     }
 
     ui->queryTabView->resizeColumnsToContents();
