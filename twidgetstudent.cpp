@@ -27,8 +27,9 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
     iconDelegate =new TMyIconDelegate(this);
     btnDelegate =new QPushButton("详情",this);
     btnDelegate->setFlat(true);
+    borrowItemModel = new QStandardItemModel(0,BORROWMAXCOLUMN,this);
 
-
+    // 实时更新数据库借阅状态
     timer=new QTimer(this);
     timer->setTimerType(Qt::CoarseTimer);
     timer->start(1000);
@@ -43,6 +44,8 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
 
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->btnPerson->click();
+
+    connect(btnDelegate, &QObject::destroyed, [](){ qDebug() << "button destroyed"; });
 }
 
 TWidgetStudent::~TWidgetStudent()
@@ -54,7 +57,6 @@ TWidgetStudent::~TWidgetStudent()
 void TWidgetStudent::do_BorrowDetailClicked()
 {
 
-
     QModelIndex index=ui->tableView->currentIndex();
     int Tborrow_id=index.data(Qt::UserRole+1).toInt();
     qDebug()<<Tborrow_id;
@@ -64,7 +66,7 @@ void TWidgetStudent::do_BorrowDetailClicked()
 
 }
 
-// 及时更新数据库  8.21
+// 及时更新数据库
 void TWidgetStudent::do_timeOut()
 {
     qDebug()<<"对齐";
@@ -105,7 +107,6 @@ void TWidgetStudent::iniTabPerson()
     bool ok=query->exec();
     if(!ok){
         QMessageBox::critical(this,"错误","信息初始化失败:"+query->lastError().text());
-        delete query;
         return ;
     }else{
         query->next();
@@ -144,12 +145,12 @@ void TWidgetStudent::iniTabPerson()
 
     if(!ok){
         QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
-        delete query;
         return ;
     }
 
+
     //model/view
-    borrowItemModel = new QStandardItemModel(0,BORROWMAXCOLUMN,this);
+
     QStringList strList;
     strList<<"封面"<<"书名"<<"作者"<<"借阅日期"<<"预计还书日期"<<"状态"<<"详情信息";
     borrowItemModel->setHorizontalHeaderLabels(strList);
@@ -235,7 +236,7 @@ void TWidgetStudent::on_btnquery_clicked()
     ui->queryTabView->setModel(queryItemModel);
     ui->radioAuthor->setChecked(true);
 
-    QSqlQuery *query = new QSqlQuery;
+
     query->exec("SELECT COUNT(*) FROM books");
     if(query->lastError().isValid()){
         QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
@@ -325,7 +326,7 @@ void TWidgetStudent::on_btnMessageSave_clicked()
     DB.transaction(); //开启事务
 
 
-    QSqlQuery *query = new QSqlQuery(DB);
+
     if(!Tname.isEmpty() && Tname!=this->name){
         query->prepare("UPDATE login"
                        " SET username = :Tname"
@@ -389,7 +390,6 @@ void TWidgetStudent::on_btnMessageSave_clicked()
     this->number=Tnumber;
     this->icon=byte;
 
-    delete query;
 }
 
 
@@ -435,7 +435,7 @@ void TWidgetStudent::on_btnCommitPwd_clicked()
     }
 
     // 修改密码
-    QSqlQuery *query=new QSqlQuery(DB);
+
     query->prepare("UPDATE login"
                    " SET login.password = :Npwd"
                    " WHERE login.id = :id");
@@ -454,14 +454,13 @@ void TWidgetStudent::on_btnCommitPwd_clicked()
     ui->lineNewPwd->clear();
     ui->lineAgainPwd->clear();
 
-    delete query;
     return ;
 }
 
 //一键还款
 void TWidgetStudent::on_btnRepay_clicked()
 {
-    QSqlQuery *query=new QSqlQuery(DB);
+
     query->prepare("UPDATE login"
                    " SET login.debt = :debt"
                    " WHERE login.id = :id");
@@ -476,7 +475,7 @@ void TWidgetStudent::on_btnRepay_clicked()
     }else{
         QMessageBox::critical(this,"错误","还款失败:"+query->lastError().text());
     }
-    delete query;
+
 }
 
 void TWidgetStudent::setQueryTabModel(int pag)
