@@ -5,7 +5,7 @@
 #include <QWidget>
 #include <QtSql>
 #include <QStandardItemModel>
-#include <QPushButton>
+
 
 
 namespace Ui {
@@ -31,14 +31,12 @@ private:
     QSqlQuery *query;
     QSqlDatabase DB;
     TMyIconDelegate *iconDelegate;
-    QPushButton *btnDelegate;
     QString pwd;
     QString name;
     qint64 number;
     int debt;
     QByteArray icon;
 
-    QStandardItemModel *borrowItemModel;
     QStandardItemModel *queryItemModel;
     QString currAuthor;
     QString currBookName;
@@ -50,7 +48,6 @@ private:
     int id;
     void iniTabPerson();
     void setQueryTabModel(int pag=1);
-    void do_BorrowDetailClicked();
     void do_timeOut();
 
 public:

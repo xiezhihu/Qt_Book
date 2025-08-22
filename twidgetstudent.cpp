@@ -25,9 +25,7 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
     DB=QSqlDatabase::database();
     query=new QSqlQuery(DB);
     iconDelegate =new TMyIconDelegate(this);
-    btnDelegate =new QPushButton("详情",this);
-    btnDelegate->setFlat(true);
-    borrowItemModel = new QStandardItemModel(0,BORROWMAXCOLUMN,this);
+
 
     // 实时更新数据库借阅状态
     timer=new QTimer(this);
@@ -35,17 +33,11 @@ TWidgetStudent::TWidgetStudent(int ID,QWidget *parent)
     timer->start(1000);
     connect(timer,&QTimer::timeout,this,&TWidgetStudent::do_timeOut);
 
-    // 8.20 刚设置完鼠标样式变化
-    btnDelegate->setStyleSheet("QPushButton { color: blue; background-color: transparent; border: none;}"
-                      "QPushButton:hover {font-weight:bold; background-color: lightgray;}");
-
-    btnDelegate->setCursor(Qt::PointingHandCursor);
-
 
     ui->tableView->setEditTriggers(QAbstractItemView::NoEditTriggers);
     ui->btnPerson->click();
 
-    connect(btnDelegate, &QObject::destroyed, [](){ qDebug() << "button destroyed"; });
+
 }
 
 TWidgetStudent::~TWidgetStudent()
@@ -53,18 +45,6 @@ TWidgetStudent::~TWidgetStudent()
     delete ui;
 }
 
-// 响应借阅信息
-void TWidgetStudent::do_BorrowDetailClicked()
-{
-
-    QModelIndex index=ui->tableView->currentIndex();
-    int Tborrow_id=index.data(Qt::UserRole+1).toInt();
-    qDebug()<<Tborrow_id;
-    BorrowDetailDialog *borrowDetail=new BorrowDetailDialog(Tborrow_id,this);
-    borrowDetail->show();
-
-
-}
 
 // 及时更新数据库
 void TWidgetStudent::do_timeOut()
@@ -82,7 +62,7 @@ void TWidgetStudent::do_timeOut()
         int Tborrow_id=query->value("borrow_id").toInt();
         QString curStatus=query->value("status").toString();
         QDateTime TreturnTime=query->value("return_date").toDateTime();
-        if(curStatus=="NORMAL" && curTime>TreturnTime){
+        if(curStatus!="TIMEOUT" && curTime>TreturnTime){
             query->prepare("UPDATE borrow"
                            " SET status = 'TIMEOUT' "
                            " WHERE borrow_id = :Tborrow_id");
@@ -91,8 +71,10 @@ void TWidgetStudent::do_timeOut()
             if(!ok){
                 QMessageBox::critical(this,"错误","数据库更新失败:"+query->lastError().text());
             }else{
+                iniTabPerson();
                 qDebug()<<"数据库更新成功";
             }
+
         }
     }
 
@@ -151,6 +133,8 @@ void TWidgetStudent::iniTabPerson()
 
     //model/view
 
+    QStandardItemModel *borrowItemModel = new QStandardItemModel(0,BORROWMAXCOLUMN,ui->tableView);
+
     QStringList strList;
     strList<<"封面"<<"书名"<<"作者"<<"借阅日期"<<"预计还书日期"<<"状态"<<"详情信息";
     borrowItemModel->setHorizontalHeaderLabels(strList);
@@ -162,6 +146,14 @@ void TWidgetStudent::iniTabPerson()
     QList<QStandardItem*> itemList;
     int curRow=0;
     while(query->next()){
+        QPushButton *btnDelegate =new QPushButton("详情",ui->tableView);
+        btnDelegate->setFlat(true);
+        btnDelegate->setStyleSheet("QPushButton { color: blue; background-color: transparent; border: none;}"
+                                   "QPushButton:hover {font-weight:bold; background-color: lightgray;}");
+
+        btnDelegate->setCursor(Qt::PointingHandCursor);
+
+
         QByteArray Ticon=query->value("image_data").toByteArray();
         QString TbookName=query->value("title").toString();
         QString Tauthor=query->value("author").toString();
@@ -205,10 +197,23 @@ void TWidgetStudent::iniTabPerson()
         borrowItemModel->setData(index,Tborrow_id,Qt::UserRole+1);
         ui->tableView->setIndexWidget(index,btnDelegate);
         curRow++;
+
+
+        connect(btnDelegate,&QPushButton::clicked,this,[this]()->void{
+            QModelIndex index=ui->tableView->currentIndex();
+            int Tborrow_id=index.data(Qt::UserRole+1).toInt();
+            qDebug()<<Tborrow_id;
+            BorrowDetailDialog *borrowDetail=new BorrowDetailDialog(Tborrow_id,this);
+            borrowDetail->show();
+            if(borrowDetail->exec()==QDialog::Accepted){
+                iniTabPerson();
+            }
+        });
     }
     ui->tableView->resizeColumnsToContents();
     ui->tableView->resizeRowsToContents();
-    connect(btnDelegate,&QPushButton::clicked,this,&TWidgetStudent::do_BorrowDetailClicked);
+
+
 }
 
 // 个人中心
@@ -245,8 +250,7 @@ void TWidgetStudent::on_btnquery_clicked()
     query->next();
     rowCount=query->value(0).toInt();
     ui->tabWidget->setCurrentIndex(int(TabWidgetType::Query));
-    emit ui->radioAuthor->click();
-
+    ui->radioAuthor->click();
 }
 
 
@@ -481,28 +485,89 @@ void TWidgetStudent::on_btnRepay_clicked()
 void TWidgetStudent::setQueryTabModel(int pag)
 {
     int start=(pag-1)*QUERYMAXROW;
+    QString sql;
     if(!currAuthor.isEmpty()){
-        return ;
+
+    }else if(!currBookName.isEmpty()){
+
+    }else if(!currCategory.isEmpty()){
+
+    }else{
+
+        sql=QString("SELECT books.image_data, books.title, books.author, books.total_count, books.borrow_count, books.id"
+                    " FROM books"
+                    " LIMIT %1,%2").arg(start).arg(QUERYMAXROW);
     }
 
-    if(!currBookName.isEmpty()){
-        return ;
-    }
-
-    if(!currCategory.isEmpty()){
-        return ;
-    }
 
 
-    // 查询全部
-    QString sql=QString("SELECT books.image_data, books.title, books.author, books.total_count, books.borrow_count, books.press, books.category, NULL AS details"
-                          " FROM books"
-                          " LIMIT %1,%2").arg(start).arg(QUERYMAXROW);
-    bool ok=query->exec();
+
+
+
+    //model/view
+    QStandardItemModel *queryItemModel = new QStandardItemModel(0,QUERYMAXCOLUMN,ui->queryTabView);
+    QStringList strList;
+    strList<<"封面"<<"书名"<<"作者"<<"总数"<<"可借阅数"<<"详细信息";
+    queryItemModel->setHorizontalHeaderLabels(strList);
+    ui->queryTabView->setModel(queryItemModel);
+    ui->queryTabView->setItemDelegateForColumn(0,iconDelegate);
+
+    bool ok=query->exec(sql);
     if(!ok){
         QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
         return ;
     }
+
+    QList<QStandardItem*> itemList;
+    QStandardItem *item;
+    int curRow=0;
+    while(query->next()){
+
+        QPushButton *btnDelegate =new QPushButton("详情",ui->tableView);
+        btnDelegate->setFlat(true);
+        btnDelegate->setStyleSheet("QPushButton { color: blue; background-color: transparent; border: none;}"
+                                   "QPushButton:hover {font-weight:bold; background-color: lightgray;}");
+        btnDelegate->setCursor(Qt::PointingHandCursor);
+
+        int Tbookid=query->value("id").toInt();
+        QByteArray TbookIcon=query->value("image_data").toByteArray();
+        QString TbookName=query->value("title").toString();
+        QString TbookAuthor=query->value("author").toString();
+        int Tsum=query->value("total_count").toInt();
+        int TborrowCount=query->value("borrow_count").toInt();
+
+        itemList.clear();
+
+        item = new QStandardItem;
+        item->setData(TbookIcon,Qt::DisplayRole);
+        itemList<<item;
+
+        item = new QStandardItem;
+        item->setText(TbookName);
+        itemList<<item;
+
+        item = new QStandardItem;
+        item->setText(TbookAuthor);
+        itemList<<item;
+
+        item = new QStandardItem;
+        item->setText(QString::number(Tsum));
+        itemList<<item;
+
+        item = new QStandardItem;
+        item->setText(QString::number(TborrowCount));
+        itemList<<item;
+
+        queryItemModel->appendRow(itemList);
+
+        QModelIndex index=queryItemModel->index(curRow,QUERYMAXCOLUMN-1);
+        queryItemModel->setData(index,Tbookid,Qt::UserRole+1);
+        ui->queryTabView->setIndexWidget(index,btnDelegate);
+        curRow++;
+    }
+
+    ui->queryTabView->resizeColumnsToContents();
+    ui->queryTabView->resizeRowsToContents();
 
 }
 
@@ -543,8 +608,8 @@ void TWidgetStudent::on_spinPag_valueChanged(int arg1)
     ui->btnFirst->setEnabled(arg1!=1);
     ui->btnLast->setEnabled(arg1!=1);
     int pags=rowCount/QUERYMAXROW;
-    ui->btnEnd->setEnabled(arg1!=rowCount%QUERYMAXROW?pags+1:pags);
-    ui->btnNext->setEnabled(arg1!=rowCount%QUERYMAXROW?pags+1:pags);
+    ui->btnEnd->setEnabled(arg1!=(rowCount%QUERYMAXROW?pags+1:pags));
+    ui->btnNext->setEnabled(arg1!=(rowCount%QUERYMAXROW?pags+1:pags));
 
     //更新数据
     setQueryTabModel(arg1);
