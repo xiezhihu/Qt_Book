@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>用户端</string>
   </property>
   <layout class="QHBoxLayout" name="horizontalLayout" stretch="1,2">
    <property name="spacing">
@@ -226,7 +226,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -1003,7 +1003,7 @@
        <item>
         <widget class="QStackedWidget" name="queryStackedWidget">
          <property name="currentIndex">
-          <number>0</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="page_4">
           <layout class="QVBoxLayout" name="verticalLayout_14">

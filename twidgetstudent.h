@@ -41,7 +41,7 @@ private:
     QString currAuthor;
     QString currBookName;
     QString currCategory;
-    int rowCount;
+
 
 
 private:
@@ -49,6 +49,8 @@ private:
     void iniTabPerson();
     void setQueryTabModel(int pag=1);
     void do_timeOut();
+    void setSpinBox(int rowCount);
+    void do_AllPushBUtton();
 
 public:
     explicit TWidgetStudent(int ID,QWidget *parent = nullptr);
@@ -77,7 +79,6 @@ private slots:
 
     void on_radioCategory_clicked(bool checked);
 
-    void on_radioAuthor_clicked();
 
 
     void on_spinPag_valueChanged(int arg1);
@@ -89,6 +90,19 @@ private slots:
     void on_btnNext_clicked();
 
     void on_btnEnd_clicked();
+
+    void on_radioName_clicked(bool checked);
+
+    void on_btnSearch_clicked();
+
+    void on_lineSearch_textChanged(const QString &arg1);
+
+    void on_radioAuthor_clicked(bool checked);
+
+
+
+
+    void on_btnQuit_clicked();
 
 private:
     Ui::TWidgetStudent *ui;
