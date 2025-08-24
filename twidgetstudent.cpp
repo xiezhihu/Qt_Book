@@ -350,9 +350,6 @@ void TWidgetStudent::on_btnMessageSave_clicked()
 
         if(!ok){
             auto err=query->lastError();
-            if(err.nativeErrorCode()=="1062"){
-                QMessageBox::information(this,"提示","学号已被注册！！！");
-            }
 
             qDebug()<<"学号保存失败:"+err.text();
             DB.rollback();

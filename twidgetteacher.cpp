@@ -3,6 +3,9 @@
 #include <QMessageBox>
 #include <QDebug>
 #include <QFileDialog>
+#include <QStandardItemModel>
+#define LOGINMAXCOLOMN 6
+#define LOGINMAXROW 15
 
 TWidgetTeacher::TWidgetTeacher(int id,QWidget *parent)
     : QWidget(parent)
@@ -116,11 +119,7 @@ void TWidgetTeacher::on_btnCommitMessage_clicked()
 
     if(!ok){
         auto err=query->lastError();
-        if(err.nativeErrorCode()=="1062"){
-            QMessageBox::information(this,"提示","用户名已被使用！！！");
-        }else{
-            QMessageBox::critical(this,"错误","提交修改失败:"+err.text());
-        }
+        QMessageBox::critical(this,"错误","提交修改失败:"+err.text());
 
     }else{
         QMessageBox::information(this,"提示","修改成功");
@@ -192,6 +191,62 @@ void TWidgetTeacher::on_btnOk_clicked()
 
     return ;
 }
+
+
+// 账号管理
+void TWidgetTeacher::on_btnManagement_clicked()
+{
+    // model/view
+    QStandardItemModel *itemModel = new QStandardItemModel(0,6);
+    ui->loginTableView->setModel(itemModel);
+    ui->loginTableView->setEnabled(false);
+    QStringList strList;
+    strList<<"姓名"<<"学号"<<"修改"<<"重置密码"<<"清除欠款"<<"删除";
+    itemModel->setHorizontalHeaderLabels(strList);
+
+    QString sql=QString("SELECT username, number, role, id"
+                        " FROM login"
+                        " WHERE role = 'STUDENT'");
+    bool ok=query->exec(sql);
+
+    if(!ok){
+        QMessageBox::critical(this,"错误","初始化失败:"+query->lastError().text());
+        return ;
+    }
+
+    QStandardItem *item;
+    QList<QStandardItem*> itemList;
+    while(query->next()){
+        itemList.clear();
+        QString TuserName = query->value("userName").toString();
+        qint64 Tnumber = query->value("number").toLongLong();
+        int Tid = query->value("id").toInt();
+
+        item = new QStandardItem(TuserName);
+        itemList.append(item);
+
+        item = new QStandardItem(QString::number(Tnumber));
+        itemList.append(item);
+
+        item = new QStandardItem();
+        item->setData(Tid,Qt::UserRole+1);
+        itemList.append(item);
+
+        item = new QStandardItem();
+        item->setData(Tid,Qt::UserRole+1);
+        itemList.append(item);
+
+        item = new QStandardItem();
+        item->setData(Tid,Qt::UserRole+1);
+        itemList.append(item);
+
+        itemModel->appendRow(itemList);
+
+    }
+
+    ui->stackedWidget->setCurrentIndex(int(WidgetType::Management));
+}
+
 
 
 

@@ -3,6 +3,7 @@
 
 #include <QWidget>
 #include <QtSql>
+#include <QStandardItemModel>
 
 namespace Ui {
 class TWidgetTeacher;
@@ -37,6 +38,8 @@ private slots:
     void on_btnPersonIconChange_clicked();
 
     void on_btnCommitMessage_clicked();
+
+    void on_btnManagement_clicked();
 
 private:
     Ui::TWidgetTeacher *ui;
