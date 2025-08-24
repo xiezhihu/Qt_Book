@@ -1,5 +1,6 @@
 #include "twidgetteacher.h"
 #include "ui_twidgetteacher.h"
+#include "tmaskdelegate.h"
 #include <QMessageBox>
 #include <QDebug>
 #include <QFileDialog>
@@ -213,7 +214,9 @@ void TWidgetTeacher::setLoginTableView(int pag)
 {
     // model/view
     itemModel = new QStandardItemModel(0,LOGINMAXCOLOMN);
+    TMaskDelegate *mask= new TMaskDelegate(this);
     ui->loginTableView->setModel(itemModel);
+    ui->loginTableView->setItemDelegateForColumn(1,mask);
     QStringList strList;
     strList<<"姓名"<<"学号"<<"修改"<<"重置密码"<<"清除欠款"<<"删除";
     itemModel->setHorizontalHeaderLabels(strList);
@@ -288,24 +291,80 @@ void TWidgetTeacher::do_change()
     int id = index.data(Qt::UserRole+1).toInt();
     QString TuserName = itemModel->item(curRow,0)->data(Qt::DisplayRole).toString();
     qint64 Tnumber = itemModel->item(curRow,1)->data(Qt::DisplayRole).toLongLong();
+    query->prepare("UPDATE login"
+                   " SET username = :Tusername, number = :Tnumber"
+                   " WHERE id = :id");
+    query->bindValue(":Tusername",TuserName);
+    query->bindValue(":Tnumber",Tnumber);
+    query->bindValue(":id",id);
+    bool ok = query->exec();
+    if(!ok){
+        QMessageBox::critical(this,"错误","修改失败:"+query->lastError().text());
+        return ;
+    }
 
-
+    QMessageBox::information(this,"提示","修改成功");
 }
 
 void TWidgetTeacher::do_resetPwd()
 {
+    QModelIndex index = ui->loginTableView->currentIndex();
+    int id = index.data(Qt::UserRole+1).toInt();
+    query->prepare("UPDATE login"
+                   " SET password = '123456'"
+                   " WHERE id = :id");
+    query->bindValue(":id",id);
+    bool ok=query->exec();
+    if(!ok){
+        QMessageBox::critical(this,"错误","重置失败:"+query->lastError().text());
+        return ;
+    }
+
+    QMessageBox::information(this,"提示","密码已重置");
 
 }
 
 void TWidgetTeacher::do_clearDebt()
 {
+    QModelIndex index = ui->loginTableView->currentIndex();
+    int id = index.data(Qt::UserRole+1).toInt();
+    query->prepare("UPDATE login"
+                   " SET debt = 0"
+                   " WHERE id = :id");
+    query->bindValue(":id",id);
+    bool ok=query->exec();
+    if(!ok){
+        QMessageBox::critical(this,"错误","清除失败:"+query->lastError().text());
+        return ;
+    }
+
+    QMessageBox::information(this,"提示","清除成功");
 
 }
 
 void TWidgetTeacher::do_delete()
 {
+    QMessageBox::StandardButton res = QMessageBox::question(this,"警告","是否删除用户？");
+    if(res == QMessageBox::StandardButton::No){
+        return ;
+    }
 
+    QModelIndex index = ui->loginTableView->currentIndex();
+    int id = index.data(Qt::UserRole+1).toInt();
+    query->prepare("DELETE FROM login"
+                   " WHERE id = :id");
+    query->bindValue(":id",id);
+    bool ok=query->exec();
+    if(!ok){
+        QMessageBox::critical(this,"错误","删除失败:"+query->lastError().text());
+        return ;
+    }
+
+    QMessageBox::information(this,"提示","删除成功");
+    itemModel->removeRow(index.row());
 }
+
+// 8.24 完成了"超链接"
 
 
 

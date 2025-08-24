@@ -45,6 +45,7 @@ else()
             borrowdetaildialog.h borrowdetaildialog.cpp borrowdetaildialog.ui
             querydetaildialog.h querydetaildialog.cpp querydetaildialog.ui
             twidgetteacher.h twidgetteacher.cpp twidgetteacher.ui
+            tmaskdelegate.h tmaskdelegate.cpp
         )
     endif()
 endif()
