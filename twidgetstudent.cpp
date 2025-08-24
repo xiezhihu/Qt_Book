@@ -601,22 +601,27 @@ void TWidgetStudent::setQueryTabModel(int pag)
 
         item = new QStandardItem;
         item->setData(TbookIcon,Qt::DisplayRole);
+        item->setEnabled(false);
         itemList<<item;
 
         item = new QStandardItem;
         item->setText(TbookName);
+        item->setEnabled(false);
         itemList<<item;
 
         item = new QStandardItem;
         item->setText(TbookAuthor);
+        item->setEnabled(false);
         itemList<<item;
 
         item = new QStandardItem;
         item->setText(QString::number(Tsum));
+        item->setEnabled(false);
         itemList<<item;
 
         item = new QStandardItem;
         item->setText(QString::number(TborrowCount));
+        item->setEnabled(false);
         itemList<<item;
 
         queryItemModel->appendRow(itemList);

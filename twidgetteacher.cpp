@@ -7,6 +7,7 @@
 #define LOGINMAXCOLOMN 6
 #define LOGINMAXROW 15
 
+
 TWidgetTeacher::TWidgetTeacher(int id,QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TWidgetTeacher)
@@ -15,6 +16,12 @@ TWidgetTeacher::TWidgetTeacher(int id,QWidget *parent)
     this->id = id;
     DB = QSqlDatabase::database();
     query = new QSqlQuery(DB);
+
+    fun[2] = [this](){do_change();};
+    fun[3] = [this](){do_resetPwd();};
+    fun[4] = [this](){do_clearDebt();};
+    fun[5] = [this](){do_delete();};
+
     ui->btnPerson->click();
 }
 
@@ -196,17 +203,24 @@ void TWidgetTeacher::on_btnOk_clicked()
 // 账号管理
 void TWidgetTeacher::on_btnManagement_clicked()
 {
+    setLoginTableView(1);
+
+    ui->stackedWidget->setCurrentIndex(int(WidgetType::Management));
+}
+
+
+void TWidgetTeacher::setLoginTableView(int pag)
+{
     // model/view
-    QStandardItemModel *itemModel = new QStandardItemModel(0,6);
+    itemModel = new QStandardItemModel(0,LOGINMAXCOLOMN);
     ui->loginTableView->setModel(itemModel);
-    ui->loginTableView->setEnabled(false);
     QStringList strList;
     strList<<"姓名"<<"学号"<<"修改"<<"重置密码"<<"清除欠款"<<"删除";
     itemModel->setHorizontalHeaderLabels(strList);
 
     QString sql=QString("SELECT username, number, role, id"
-                        " FROM login"
-                        " WHERE role = 'STUDENT'");
+                          " FROM login"
+                          " WHERE role = 'STUDENT'");
     bool ok=query->exec(sql);
 
     if(!ok){
@@ -216,6 +230,8 @@ void TWidgetTeacher::on_btnManagement_clicked()
 
     QStandardItem *item;
     QList<QStandardItem*> itemList;
+    int curRow=0;
+
     while(query->next()){
         itemList.clear();
         QString TuserName = query->value("userName").toString();
@@ -226,6 +242,11 @@ void TWidgetTeacher::on_btnManagement_clicked()
         itemList.append(item);
 
         item = new QStandardItem(QString::number(Tnumber));
+        itemList.append(item);
+
+
+        item = new QStandardItem();
+        item->setData(Tid,Qt::UserRole+1);
         itemList.append(item);
 
         item = new QStandardItem();
@@ -242,11 +263,49 @@ void TWidgetTeacher::on_btnManagement_clicked()
 
         itemModel->appendRow(itemList);
 
-    }
+        for(int i=2;i<=5;i++){
 
-    ui->stackedWidget->setCurrentIndex(int(WidgetType::Management));
+            QPushButton *btn = new QPushButton(strList[i],ui->loginTableView);
+            btn->setFlat(true);
+            btn->setStyleSheet("QPushButton { color: blue; background-color: transparent; border: none;}"
+                               "QPushButton:hover {font-weight:bold; background-color: lightgray;}");
+            btn->setCursor(Qt::PointingHandCursor);
+            QModelIndex index = itemModel->index(curRow,i);
+            ui->loginTableView->setIndexWidget(index,btn);
+
+
+            connect(btn,&QPushButton::clicked,this,fun[i]);
+        }
+
+        curRow++;
+    }
 }
 
+void TWidgetTeacher::do_change()
+{
+    QModelIndex index = ui->loginTableView->currentIndex();
+    int curRow = index.row();
+    int id = index.data(Qt::UserRole+1).toInt();
+    QString TuserName = itemModel->item(curRow,0)->data(Qt::DisplayRole).toString();
+    qint64 Tnumber = itemModel->item(curRow,1)->data(Qt::DisplayRole).toLongLong();
+
+
+}
+
+void TWidgetTeacher::do_resetPwd()
+{
+
+}
+
+void TWidgetTeacher::do_clearDebt()
+{
+
+}
+
+void TWidgetTeacher::do_delete()
+{
+
+}
 
 
 

@@ -21,6 +21,14 @@ private:
     QSqlQuery *query;
     int id;
     QString pwd;
+    QStandardItemModel *itemModel;
+    QHash<int,std::function<void()>> fun;
+
+    void setLoginTableView(int pag);
+    void do_change();
+    void do_resetPwd();
+    void do_clearDebt();
+    void do_delete();
 
 public:
     explicit TWidgetTeacher(int id,QWidget *parent = nullptr);
