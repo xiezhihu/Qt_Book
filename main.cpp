@@ -1,5 +1,6 @@
 #include "dialog.h"
 #include "twidgetstudent.h"
+#include "twidgetteacher.h"
 #include <QApplication>
 #include <QDebug>
 
@@ -23,10 +24,16 @@ int main(int argc, char *argv[])
             student->show();
 
         }else if(type==Dialog::Role::TEACHER){
+            TWidgetTeacher *teacher=new TWidgetTeacher(id);
+            teacher->show();
 
         }
         qDebug()<<"登陆成功";
     }else if(res==QDialog::Rejected){
+
+
+
+
         qDebug()<<"登陆失败";
     }
     return a.exec();

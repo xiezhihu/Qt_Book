@@ -106,11 +106,11 @@ void TWidgetStudent::iniTabPerson()
         map.loadFromData(TiconData);
         ui->labIcon->setPixmap(map.scaled(300,300,Qt::KeepAspectRatio,Qt::SmoothTransformation));
 
-        this->pwd=Tpwd;
-        this->name=Tname;
-        this->number=Tnumber;
-        this->debt=Tdebt;
-        this->icon=TiconData;
+        this->pwd=Tpwd; // 密码
+        this->name=Tname; // 用户名
+        this->number=Tnumber; // 学号
+        this->debt=Tdebt; // 欠款
+        this->icon=TiconData; // 头像
     }
 
 
