@@ -6,8 +6,11 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QStandardItemModel>
+#include <QInputDialog>
 #define LOGINMAXCOLOMN 6
 #define LOGINMAXROW 2
+#define QUERYMAXROW 15
+#define QUERYMAXCOLUMN 8
 
 
 TWidgetTeacher::TWidgetTeacher(int id,QWidget *parent)
@@ -23,6 +26,10 @@ TWidgetTeacher::TWidgetTeacher(int id,QWidget *parent)
     fun[3] = [this](){do_resetPwd();};
     fun[4] = [this](){do_clearDebt();};
     fun[5] = [this](){do_delete();};
+
+    fun[101] = [this](){do_addBookSum();};
+    fun[102] = [this](){do_SetBook();};
+    fun[103] = [this](){do_deleleBook();};
 
     ui->btnPerson->click();
 }
@@ -289,9 +296,11 @@ void TWidgetTeacher::setLoginTableView(int pag,QString username, QString number)
         int Tid = query->value("id").toInt();
 
         item = new QStandardItem(TuserName);
+        item->setEnabled(false);
         itemList.append(item);
 
         item = new QStandardItem(QString::number(Tnumber));
+        item->setEnabled(false);
         itemList.append(item);
 
 
@@ -536,11 +545,430 @@ void TWidgetTeacher::on_btnAddStudent_clicked()
 
 
 
-
-
-
+// 图书管理
 void TWidgetTeacher::on_btnBook_clicked()
 {
 
+
+    ui->stackedWidget->setCurrentIndex(2);
+    ui->radioAuthor->setChecked(true);
+    ui->btnSearchBook->click();
 }
+
+
+void TWidgetTeacher::setQueryTabModel(int pag){
+    if(pag<1)pag = 1;
+    int start=(pag-1)*QUERYMAXROW;
+    QString sql;
+    /**
+     * 1.获取行数，设置spinBox最大值
+     * 2.设置显示数据
+     */
+    if(!currAuthor.isEmpty()){
+
+        sql=QString("SELECT books.title, books.author, books.press, books.total_count, books.borrow_count, books.id"
+                      " FROM books"
+                      " WHERE books.author LIKE :author"
+                      " LIMIT %1,%2").arg(start).arg(QUERYMAXROW);
+        query->prepare(sql);
+        query->bindValue(":author","%"+currAuthor+"%");
+
+
+    }else if(!currBookName.isEmpty()){
+
+        sql=QString("SELECT books.title, books.author, books.press, books.total_count, books.borrow_count, books.id"
+                      " FROM books"
+                      " WHERE books.title LIKE :bookName"
+                      " LIMIT %1,%2").arg(start).arg(QUERYMAXROW);
+        query->prepare(sql);
+        query->bindValue(":bookName","%"+currBookName+"%");
+
+
+    }else if(!currCategory.isEmpty()){
+
+        sql=QString("SELECT books.title, books.author, books.press, books.total_count, books.borrow_count, books.category, books.id"
+                      " FROM books"
+                      " WHERE books.category = :category"
+                      " LIMIT %1,%2").arg(start).arg(QUERYMAXROW);
+        query->prepare(sql);
+        query->bindValue(":category",currCategory);
+
+    }else{
+
+        sql=QString("SELECT books.title, books.author, books.press, books.total_count, books.borrow_count, books.id"
+                      " FROM books"
+                      " LIMIT %1,%2").arg(start).arg(QUERYMAXROW);
+        query->prepare(sql);
+
+    }
+
+
+
+
+    //model/view  8.22完成了图书查询的详情
+    QStandardItemModel *queryItemModel = new QStandardItemModel(0,QUERYMAXCOLUMN,ui->queryTabView);
+    QStringList strList;
+    strList<<"书名"<<"作者"<<"出版社"<<"总数"<<"可借阅数"<<"增加库存"<<"修改图书"<<"删除图书";
+    queryItemModel->setHorizontalHeaderLabels(strList);
+    ui->queryTabView->setModel(queryItemModel);
+
+
+    bool ok=query->exec();
+    if(!ok){
+        QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+        return ;
+    }
+
+    QList<QStandardItem*> itemList;
+    QStandardItem *item;
+    int curRow=0;
+    while(query->next()){
+
+        int Tbookid=query->value("id").toInt();
+        QString TbookName=query->value("title").toString();
+        QString TbookAuthor=query->value("author").toString();
+        QString TbookPress=query->value("press").toString();
+        int Tsum=query->value("total_count").toInt();
+        int TborrowCount=query->value("borrow_count").toInt();
+
+        itemList.clear();
+
+        item = new QStandardItem;
+        item->setText(TbookName);
+        itemList<<item;
+
+        item = new QStandardItem;
+        item->setText(TbookAuthor);
+        itemList<<item;
+
+        item = new QStandardItem;
+        item->setText(TbookPress);
+        itemList<<item;
+
+        item = new QStandardItem;
+        item->setText(QString::number(Tsum));
+        item->setEnabled(false);
+        itemList<<item;
+
+        item = new QStandardItem;
+        item->setText(QString::number(TborrowCount));
+        item->setEnabled(false);
+        itemList<<item;
+
+        queryItemModel->appendRow(itemList);
+
+        for(int i=QUERYMAXCOLUMN-3;i<QUERYMAXCOLUMN;i++){
+            QPushButton *btnDelegate =new QPushButton(strList[i],ui->queryTabView);
+            btnDelegate->setFlat(true);
+            btnDelegate->setStyleSheet("QPushButton { color: blue; background-color: transparent; border: none;}"
+                                       "QPushButton:hover {font-weight:bold; background-color: lightgray;}");
+            btnDelegate->setCursor(Qt::PointingHandCursor);
+
+            QModelIndex index=queryItemModel->index(curRow,i);
+            queryItemModel->setData(index,Tbookid,Qt::UserRole+1);
+            ui->queryTabView->setIndexWidget(index,btnDelegate);
+
+            connect(btnDelegate,&QPushButton::clicked,this,fun[96+i]);
+        }
+
+        curRow++;
+
+
+    }
+
+    ui->queryTabView->resizeColumnsToContents();
+    ui->queryTabView->resizeRowsToContents();
+}
+
+// 增加库存
+void TWidgetTeacher::do_addBookSum()
+{
+    int add = QInputDialog::getInt(ui->queryTabView,"增加库存","输入增加的数量:",0,0,INT_MAX,1);
+    if(!add) return ;
+
+    QModelIndex index = ui->queryTabView->currentIndex();
+    int id = index.data(Qt::UserRole+1).toInt();
+
+    query->prepare("UPDATE books"
+                   " SET total_count = total_count + :add, borrow_count = borrow_count + :add"
+                   " WHERE id = :id");
+    query->bindValue(":add",add);
+    query->bindValue(":id",id);
+    bool ok = query->exec();
+    if(!ok){
+        QMessageBox::critical(this,"错误","增加失败:"+query->lastError().text());
+        return ;
+    }
+    QMessageBox::information(this,"提示","增加成功");
+    setQueryTabModel(ui->spinPagBook->value());
+}
+
+void TWidgetTeacher::do_SetBook(){
+
+
+}
+
+// 删除书本
+void TWidgetTeacher::do_deleleBook(){
+    QMessageBox::StandardButton res = QMessageBox::question(this,"警告","会来连同借阅表记录一起删除。\n是否要删除图书？");
+    if(res == QMessageBox::StandardButton::No)return ;
+
+    QModelIndex index = ui->queryTabView->currentIndex();
+    int id = index.data(Qt::UserRole+1).toInt();
+
+    DB.transaction();
+    // 删除书本
+    query->prepare("DELETE FROM books"
+                   " WHERE id = :id");
+    query->bindValue(":id",id);
+    bool isDeleteBook = query->exec();
+
+    // 删除借阅记录
+    query->prepare("DELETE FROM borrow"
+                   " WHERE book_id = :id");
+    query->bindValue(":id",id);
+    bool isDeleteBorrow = query->exec();
+
+    if(isDeleteBook && isDeleteBorrow){
+        DB.commit();
+        QMessageBox::information(this,"提示","删除成功");
+        setQueryTabModel(ui->spinPagBook->value());
+    }else{
+        DB.rollback();
+        QMessageBox::critical(this,"错误","删除失败:"+query->lastError().text());
+
+    }
+
+}
+
+// 设置spinBox
+void TWidgetTeacher::setSpinBox(int rowCount)
+{
+    int pags=rowCount/QUERYMAXROW;
+    ui->labSumBook->setText(QString("页,共%1页").arg(rowCount%QUERYMAXROW?pags+1:pags));
+    ui->spinPagBook->setMaximum(rowCount%QUERYMAXROW?pags+1:pags);
+}
+
+
+
+void TWidgetTeacher::on_radioAuthor_clicked(bool checked)
+{
+    if(checked){
+        currAuthor.clear();
+        currBookName.clear();
+        currCategory.clear();
+        ui->lineSearchBook->clear();
+        ui->lineSearchBook->setEnabled(true);
+        ui->btnSearchBook->setEnabled(true);
+        ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::ShowData));
+        ui->btnSearchBook->click();
+    }
+}
+
+
+void TWidgetTeacher::on_radioName_clicked(bool checked)
+{
+    if(checked){
+        currAuthor.clear();
+        currBookName.clear();
+        currCategory.clear();
+        ui->lineSearchBook->clear();
+        ui->lineSearchBook->setEnabled(true);
+        ui->btnSearchBook->setEnabled(true);
+        ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::ShowData));
+        ui->btnSearchBook->click();
+    }
+
+}
+
+
+void TWidgetTeacher::on_radioCategory_clicked(bool checked)
+{
+    if(checked){
+        currAuthor.clear();
+        currBookName.clear();
+        currCategory.clear();
+        ui->lineSearchBook->clear();
+        ui->lineSearchBook->setEnabled(false);
+        ui->btnSearchBook->setEnabled(false);
+        ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::Category));
+
+        connect(ui->btnComputer,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnEconomy,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnFood,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnHealth,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnHistory,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnLaw,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnManagement,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnPoetry,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnPsychology,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnRomance,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnSciFi,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnScience,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnSports,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnTravel,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+        connect(ui->btnYouth,&QPushButton::clicked,this,&TWidgetTeacher::do_AllPushBUtton);
+
+    }
+}
+
+// 分类通用槽函数
+void TWidgetTeacher::do_AllPushBUtton()
+{
+    QPushButton *btn = dynamic_cast<QPushButton*>(this->sender());
+    if(!btn) return ;
+
+    currCategory=btn->text();
+
+    query->prepare("SELECT COUNT(*) "
+                   " FROM books"
+                   " WHERE books.category = :category");
+    query->bindValue(":category",currCategory);
+    bool ok=query->exec();
+    if(!ok){
+        QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+        return ;
+    }
+    query->next();
+    int rowCount=query->value(0).toInt();
+    setSpinBox(rowCount);
+
+    if(!rowCount) return ;
+
+
+    ui->spinPagBook->setValue(1);
+    emit ui->spinPagBook->valueChanged(1);
+    setQueryTabModel(ui->spinPagBook->value());
+    ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::ShowData));
+}
+
+
+// spinPagBook
+void TWidgetTeacher::on_spinPagBook_valueChanged(int arg1)
+{
+    ui->btnFirstBook->setEnabled(arg1!=ui->spinPagBook->minimum() && arg1!=1);// 对应没有数据和只有一页数据
+    ui->btnLastBook->setEnabled(arg1!=ui->spinPagBook->minimum() && arg1!=1);
+    ui->btnEndBook->setEnabled(arg1!=ui->spinPagBook->maximum());
+    ui->btnNextBook->setEnabled(arg1!=ui->spinPagBook->maximum());
+    qDebug()<<arg1;
+
+    //更新数据
+    setQueryTabModel(arg1);
+}
+
+// 首页
+void TWidgetTeacher::on_btnFirstBook_clicked()
+{
+    ui->spinPagBook->setValue(1);
+}
+
+// 上一页
+void TWidgetTeacher::on_btnLastBook_clicked()
+{
+    int curPag=ui->spinPagBook->value();
+    ui->spinPagBook->setValue(curPag-1);
+}
+
+// 下一页
+void TWidgetTeacher::on_btnNextBook_clicked()
+{
+    int curPag=ui->spinPagBook->value();
+    ui->spinPagBook->setValue(curPag+1);
+}
+
+//尾页
+void TWidgetTeacher::on_btnEndBook_clicked()
+{
+    ui->spinPagBook->setValue(ui->spinPagBook->maximum());
+}
+
+// 搜索
+void TWidgetTeacher::on_btnSearchBook_clicked()
+{
+    QString str = ui->lineSearchBook->text();
+
+    if(str.isEmpty()){ // 三者为空等价于当前搜索框为空
+
+        currBookName.clear();
+        currCategory.clear();
+        currAuthor.clear();
+        query->exec("SELECT COUNT(*) FROM books");
+        if(query->lastError().isValid()){
+            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+            return ;
+        }
+        query->next();
+        int rowCount=query->value(0).toInt();
+        setSpinBox(rowCount);
+
+        if(!rowCount) return ;
+
+        ui->spinPagBook->setValue(1);
+        emit ui->spinPagBook->valueChanged(1);
+        setQueryTabModel(ui->spinPagBook->value());
+        return ;
+    }
+
+    if(ui->radioAuthor->isChecked()){
+
+        currAuthor = str;
+
+        query->prepare("SELECT COUNT(*) "
+                       " FROM books"
+                       " WHERE books.author LIKE :author");
+        query->bindValue(":author","%"+currAuthor+"%");
+        bool ok=query->exec();
+        if(!ok){
+            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+            return ;
+        }
+        query->next();
+        int rowCount=query->value(0).toInt();
+        setSpinBox(rowCount);
+
+        if(!rowCount) return ;
+
+
+        currBookName.clear();
+        currCategory.clear();
+        ui->spinPagBook->setValue(1);
+        emit ui->spinPagBook->valueChanged(1);
+        setQueryTabModel(ui->spinPagBook->value());
+
+
+    }else if(ui->radioName->isChecked()){
+        currAuthor.clear();
+        currBookName=str;
+
+        query->prepare("SELECT COUNT(*) "
+                       " FROM books"
+                       " WHERE books.title LIKE :bookName");
+        query->bindValue(":bookName","%"+currBookName+"%");
+        bool ok=query->exec();
+        if(!ok){
+            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+            return ;
+        }
+        query->next();
+        int rowCount=query->value(0).toInt();
+        setSpinBox(rowCount);
+
+        if(!rowCount) return ;
+
+
+        currCategory.clear();
+        ui->spinPagBook->setValue(1);
+        emit ui->spinPagBook->valueChanged(1);
+        setQueryTabModel(ui->spinPagBook->value());
+    }
+
+}
+
+// 当lineSearch变化时，及时改变内容，提高灵敏
+void TWidgetTeacher::on_lineSearchBook_textChanged(const QString &arg1)
+{
+    ui->btnSearchBook->click();
+}
+
+
 

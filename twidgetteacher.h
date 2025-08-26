@@ -16,6 +16,10 @@ class TWidgetTeacher : public QWidget
         Person,Management,Book,Quit
     };
 
+    enum class QueryStackWidgetType{
+        ShowData=0,Category
+    };
+
 private:
     QSqlDatabase DB;
     QSqlQuery *query;
@@ -24,12 +28,24 @@ private:
     QStandardItemModel *itemModel;
     QHash<int,std::function<void()>> fun;
 
+
+    QString currAuthor;
+    QString currBookName;
+    QString currCategory;
+
+
     void setLoginTableView(int pag,QString name = QString(),QString number = QString());
     void do_change();
     void do_resetPwd();
     void do_clearDebt();
     void do_delete();
+    void do_AllPushBUtton();
+    void do_addBookSum();
+    void do_SetBook();
+    void do_deleleBook();
     void setSpinPagMax(int rowCount);
+    void setQueryTabModel(int pag=1);
+    void setSpinBox(int rowCount);
 
 public:
     explicit TWidgetTeacher(int id,QWidget *parent = nullptr);
@@ -72,6 +88,27 @@ private slots:
     void on_btnCommitPwd_clicked();
 
     void on_btnBook_clicked();
+
+
+    void on_radioAuthor_clicked(bool checked);
+
+    void on_radioName_clicked(bool checked);
+
+    void on_radioCategory_clicked(bool checked);
+
+    void on_spinPagBook_valueChanged(int arg1);
+
+    void on_btnFirstBook_clicked();
+
+    void on_btnLastBook_clicked();
+
+    void on_btnNextBook_clicked();
+
+    void on_btnEndBook_clicked();
+
+    void on_btnSearchBook_clicked();
+
+    void on_lineSearchBook_textChanged(const QString &arg1);
 
 private:
     Ui::TWidgetTeacher *ui;

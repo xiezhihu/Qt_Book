@@ -235,16 +235,6 @@ void TWidgetStudent::on_btnMessage_clicked()
 //图书查询
 void TWidgetStudent::on_btnquery_clicked()
 {
-    // query->exec("SELECT COUNT(*) FROM books");
-    // if(query->lastError().isValid()){
-    //     QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
-    //     return ;
-    // }
-    // query->next();
-    // int rowCount=query->value(0).toInt();
-    // setSpinBox(rowCount);
-
-
 
     ui->tabWidget->setCurrentIndex(int(TabWidgetType::Query));
     ui->radioAuthor->setChecked(true);
@@ -635,8 +625,6 @@ void TWidgetStudent::on_radioAuthor_clicked(bool checked)
         ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::ShowData));
         ui->btnSearch->click();
     }
-
-
 }
 
 // 书名
