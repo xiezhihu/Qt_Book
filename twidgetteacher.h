@@ -36,7 +36,6 @@ public:
     ~TWidgetTeacher();
 
 private slots:
-    void on_btnOk_clicked();
 
     void on_btnPerson_clicked();
 
@@ -67,6 +66,12 @@ private slots:
     void on_btnSearch_clicked();
 
     void on_lineSearch_textChanged(const QString &arg1);
+
+    void on_btnAddStudent_clicked();
+
+    void on_btnCommitPwd_clicked();
+
+    void on_btnBook_clicked();
 
 private:
     Ui::TWidgetTeacher *ui;

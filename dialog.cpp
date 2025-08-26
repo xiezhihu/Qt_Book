@@ -63,7 +63,7 @@ void Dialog::Login(const QString &user, const QString &pwd)
     query=new QSqlQuery(DB);
     QString str="SELECT password, role, id"
                   " FROM login"
-                  " WHERE username = :user;";
+                  " WHERE number = :user;";
     query->prepare(str);
     query->bindValue(":user",user);
     bool ok=query->exec();
@@ -74,7 +74,7 @@ void Dialog::Login(const QString &user, const QString &pwd)
         return ;
     }
 
-    query->last();
+    query->next();
     QString pass=query->value("password").toString();
     if(pass==pwd){
         QMessageBox::information(this,"提示","登陆成功");

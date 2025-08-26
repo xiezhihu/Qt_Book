@@ -1,12 +1,13 @@
 #include "twidgetteacher.h"
 #include "ui_twidgetteacher.h"
 #include "tmaskdelegate.h"
+#include "taddstudentdialog.h"
 #include <QMessageBox>
 #include <QDebug>
 #include <QFileDialog>
 #include <QStandardItemModel>
 #define LOGINMAXCOLOMN 6
-#define LOGINMAXROW 1
+#define LOGINMAXROW 2
 
 
 TWidgetTeacher::TWidgetTeacher(int id,QWidget *parent)
@@ -137,7 +138,7 @@ void TWidgetTeacher::on_btnCommitMessage_clicked()
 
 
 // 密码修改
-void TWidgetTeacher::on_btnOk_clicked()
+void TWidgetTeacher::on_btnCommitPwd_clicked()
 {
     // 获取数据
     QString Opwd=ui->linePwd->text();
@@ -415,6 +416,7 @@ void TWidgetTeacher::setSpinPagMax(int rowCount)
     int pags = rowCount/LOGINMAXROW;
     ui->labSum->setText(QString("页,共%1页").arg(rowCount%LOGINMAXROW?pags+1:pags));
     ui->spinPag->setMaximum(rowCount%LOGINMAXROW?pags+1:pags);
+    emit ui->spinPag->valueChanged(ui->spinPag->value());
 
 }
 
@@ -519,5 +521,26 @@ void TWidgetTeacher::on_btnSearch_clicked()
 void TWidgetTeacher::on_lineSearch_textChanged(const QString &arg1)
 {
     ui->btnSearch->click();
+}
+
+// 添加学生
+void TWidgetTeacher::on_btnAddStudent_clicked()
+{
+    TAddStudentDialog *dialog = new TAddStudentDialog(ui->loginTableView);
+    dialog->show();
+    if(dialog->exec()==QDialog::Accepted){
+        ui->btnSearch->click();
+    }
+}
+
+
+
+
+
+
+
+void TWidgetTeacher::on_btnBook_clicked()
+{
+
 }
 

@@ -46,6 +46,7 @@ else()
             querydetaildialog.h querydetaildialog.cpp querydetaildialog.ui
             twidgetteacher.h twidgetteacher.cpp twidgetteacher.ui
             tmaskdelegate.h tmaskdelegate.cpp
+            taddstudentdialog.h taddstudentdialog.cpp taddstudentdialog.ui
         )
     endif()
 endif()
