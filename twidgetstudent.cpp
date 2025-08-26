@@ -235,9 +235,21 @@ void TWidgetStudent::on_btnMessage_clicked()
 //图书查询
 void TWidgetStudent::on_btnquery_clicked()
 {
-    ui->radioAuthor->setChecked(true);
+    // query->exec("SELECT COUNT(*) FROM books");
+    // if(query->lastError().isValid()){
+    //     QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+    //     return ;
+    // }
+    // query->next();
+    // int rowCount=query->value(0).toInt();
+    // setSpinBox(rowCount);
+
+
+
     ui->tabWidget->setCurrentIndex(int(TabWidgetType::Query));
-    ui->radioAuthor->click();
+    ui->radioAuthor->setChecked(true);
+    ui->btnSearch->click();
+
 }
 
 
@@ -469,7 +481,6 @@ void TWidgetStudent::on_btnRepay_clicked()
 void TWidgetStudent::setQueryTabModel(int pag)
 {
     if(pag<1)pag = 1;
-    ui->spinPag->setValue(pag);
     int start=(pag-1)*QUERYMAXROW;
     QString sql;
     /**
@@ -477,19 +488,6 @@ void TWidgetStudent::setQueryTabModel(int pag)
      * 2.设置显示数据
      */
     if(!currAuthor.isEmpty()){
-        query->prepare("SELECT COUNT(*) "
-                       " FROM books"
-                       " WHERE books.author LIKE :author");
-        query->bindValue(":author","%"+currAuthor+"%");
-        bool ok=query->exec();
-        if(!ok){
-            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
-            return ;
-        }
-        query->next();
-        int rowCount=query->value(0).toInt();
-        setSpinBox(rowCount);
-
 
         sql=QString("SELECT books.image_data, books.title, books.author, books.total_count, books.borrow_count, books.id"
                     " FROM books"
@@ -497,27 +495,9 @@ void TWidgetStudent::setQueryTabModel(int pag)
                     " LIMIT %1,%2").arg(start).arg(QUERYMAXROW);
         query->prepare(sql);
         query->bindValue(":author","%"+currAuthor+"%");
-        ok=query->exec();
-        if (!query->exec()) {
-            qDebug() << "SQL 执行失败:" << query->lastError().text();
-            qDebug() << "最终 SQL:" << query->lastQuery();
-        }
 
 
     }else if(!currBookName.isEmpty()){
-        query->prepare("SELECT COUNT(*) "
-                       " FROM books"
-                       " WHERE books.title LIKE :bookName");
-        query->bindValue(":bookName","%"+currBookName+"%");
-        bool ok=query->exec();
-        if(!ok){
-            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
-            return ;
-        }
-        query->next();
-        int rowCount=query->value(0).toInt();
-        setSpinBox(rowCount);
-
 
         sql=QString("SELECT books.image_data, books.title, books.author, books.total_count, books.borrow_count, books.id"
                       " FROM books"
@@ -528,20 +508,6 @@ void TWidgetStudent::setQueryTabModel(int pag)
 
 
     }else if(!currCategory.isEmpty()){
-        query->prepare("SELECT COUNT(*) "
-                    " FROM books"
-                    " WHERE books.category = :category");
-        query->bindValue(":category",currCategory);
-        bool ok=query->exec();
-        if(!ok){
-            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
-            return ;
-        }
-        query->next();
-        int rowCount=query->value(0).toInt();
-        setSpinBox(rowCount);
-
-
 
         sql=QString("SELECT books.image_data, books.title, books.author, books.total_count, books.borrow_count, books.category, books.id"
                       " FROM books"
@@ -551,14 +517,6 @@ void TWidgetStudent::setQueryTabModel(int pag)
         query->bindValue(":category",currCategory);
 
     }else{
-        query->exec("SELECT COUNT(*) FROM books");
-        if(query->lastError().isValid()){
-            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
-            return ;
-        }
-        query->next();
-        int rowCount=query->value(0).toInt();
-        setSpinBox(rowCount);
 
         sql=QString("SELECT books.image_data, books.title, books.author, books.total_count, books.borrow_count, books.id"
                     " FROM books"
@@ -659,6 +617,7 @@ void TWidgetStudent::setSpinBox(int rowCount)
     int pags=rowCount/QUERYMAXROW;
     ui->labSum->setText(QString("页,共%1页").arg(rowCount%QUERYMAXROW?pags+1:pags));
     ui->spinPag->setMaximum(rowCount%QUERYMAXROW?pags+1:pags);
+
 }
 
 
@@ -674,7 +633,7 @@ void TWidgetStudent::on_radioAuthor_clicked(bool checked)
         ui->lineSearch->setEnabled(true);
         ui->btnSearch->setEnabled(true);
         ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::ShowData));
-        setQueryTabModel();
+        ui->btnSearch->click();
     }
 
 
@@ -691,8 +650,7 @@ void TWidgetStudent::on_radioName_clicked(bool checked)
         ui->lineSearch->setEnabled(true);
         ui->btnSearch->setEnabled(true);
         ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::ShowData));
-        setQueryTabModel();
-
+        ui->btnSearch->click();
     }
 
 }
@@ -733,10 +691,11 @@ void TWidgetStudent::on_radioCategory_clicked(bool checked)
 //spinBox
 void TWidgetStudent::on_spinPag_valueChanged(int arg1)
 {
-    ui->btnFirst->setEnabled(arg1!=1);
-    ui->btnLast->setEnabled(arg1!=1);
+    ui->btnFirst->setEnabled(arg1!=ui->spinPag->minimum() && arg1!=1);// 对应没有数据和只有一页数据
+    ui->btnLast->setEnabled(arg1!=ui->spinPag->minimum() && arg1!=1);
     ui->btnEnd->setEnabled(arg1!=ui->spinPag->maximum());
     ui->btnNext->setEnabled(arg1!=ui->spinPag->maximum());
+    qDebug()<<arg1;
 
     //更新数据
     setQueryTabModel(arg1);
@@ -773,35 +732,92 @@ void TWidgetStudent::on_btnEnd_clicked()
 // 搜索
 void TWidgetStudent::on_btnSearch_clicked()
 {
-    if(ui->radioAuthor->isChecked()){
-        currAuthor = ui->lineSearch->text();
+
+    QString str = ui->lineSearch->text();
+
+    if(str.isEmpty()){ // 三者为空等价于当前搜索框为空
+
         currBookName.clear();
         currCategory.clear();
-        setQueryTabModel(1);
+        currAuthor.clear();
+        query->exec("SELECT COUNT(*) FROM books");
+        if(query->lastError().isValid()){
+            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+            return ;
+        }
+        query->next();
+        int rowCount=query->value(0).toInt();
+        setSpinBox(rowCount);
+
+        if(!rowCount) return ;
+
+        ui->spinPag->setValue(1);
+        emit ui->spinPag->valueChanged(1);
+        setQueryTabModel(ui->spinPag->value());
+        return ;
+    }
+
+    if(ui->radioAuthor->isChecked()){
+
+        currAuthor = str;
+
+        query->prepare("SELECT COUNT(*) "
+                       " FROM books"
+                       " WHERE books.author LIKE :author");
+        query->bindValue(":author","%"+currAuthor+"%");
+        bool ok=query->exec();
+        if(!ok){
+            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+            return ;
+        }
+        query->next();
+        int rowCount=query->value(0).toInt();
+        setSpinBox(rowCount);
+
+        if(!rowCount) return ;
+
+
+        currBookName.clear();
+        currCategory.clear();
+        ui->spinPag->setValue(1);
+        emit ui->spinPag->valueChanged(1);
+        setQueryTabModel(ui->spinPag->value());
+
 
     }else if(ui->radioName->isChecked()){
         currAuthor.clear();
-        currBookName=ui->lineSearch->text();
+        currBookName=str;
+
+        query->prepare("SELECT COUNT(*) "
+                       " FROM books"
+                       " WHERE books.title LIKE :bookName");
+        query->bindValue(":bookName","%"+currBookName+"%");
+        bool ok=query->exec();
+        if(!ok){
+            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+            return ;
+        }
+        query->next();
+        int rowCount=query->value(0).toInt();
+        setSpinBox(rowCount);
+
+        if(!rowCount) return ;
+
+
         currCategory.clear();
-        setQueryTabModel(1);
+        ui->spinPag->setValue(1);
+        emit ui->spinPag->valueChanged(1);
+        setQueryTabModel(ui->spinPag->value());
     }
+
+
 }
 
 // 当lineSearch变化时，及时改变内容，提高灵敏
 void TWidgetStudent::on_lineSearch_textChanged(const QString &arg1)
 {
-    if(ui->radioAuthor->isChecked()){
-        currAuthor = arg1;
-        currBookName.clear();
-        currCategory.clear();
-        setQueryTabModel(1);
+    ui->btnSearch->click();
 
-    }else if(ui->radioName->isChecked()){
-        currAuthor.clear();
-        currBookName = arg1;
-        currCategory.clear();
-        setQueryTabModel(1);
-    }
 }
 
 // 分类通用槽函数
@@ -811,7 +827,26 @@ void TWidgetStudent::do_AllPushBUtton()
     if(!btn) return ;
 
     currCategory=btn->text();
-    setQueryTabModel(1);
+
+    query->prepare("SELECT COUNT(*) "
+                   " FROM books"
+                   " WHERE books.category = :category");
+    query->bindValue(":category",currCategory);
+    bool ok=query->exec();
+    if(!ok){
+        QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+        return ;
+    }
+    query->next();
+    int rowCount=query->value(0).toInt();
+    setSpinBox(rowCount);
+
+    if(!rowCount) return ;
+
+
+    ui->spinPag->setValue(1);
+    emit ui->spinPag->valueChanged(1);
+    setQueryTabModel(ui->spinPag->value());
     ui->queryStackedWidget->setCurrentIndex(int(QueryStackWidgetType::ShowData));
 }
 
