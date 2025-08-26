@@ -2,13 +2,14 @@
 #include "ui_twidgetteacher.h"
 #include "tmaskdelegate.h"
 #include "taddstudentdialog.h"
+#include "tsetbooksdialog.h"
 #include <QMessageBox>
 #include <QDebug>
 #include <QFileDialog>
 #include <QStandardItemModel>
 #include <QInputDialog>
 #define LOGINMAXCOLOMN 6
-#define LOGINMAXROW 2
+#define LOGINMAXROW 10
 #define QUERYMAXROW 15
 #define QUERYMAXCOLUMN 8
 
@@ -537,12 +538,10 @@ void TWidgetTeacher::on_btnAddStudent_clicked()
 {
     TAddStudentDialog *dialog = new TAddStudentDialog(ui->loginTableView);
     dialog->show();
-    if(dialog->exec()==QDialog::Accepted){
-        ui->btnSearch->click();
-    }
+    dialog->exec();
+    ui->btnSearch->click();
+
 }
-
-
 
 
 // 图书管理
@@ -635,14 +634,17 @@ void TWidgetTeacher::setQueryTabModel(int pag){
 
         item = new QStandardItem;
         item->setText(TbookName);
+        item->setEnabled(false);
         itemList<<item;
 
         item = new QStandardItem;
         item->setText(TbookAuthor);
+        item->setEnabled(false);
         itemList<<item;
 
         item = new QStandardItem;
         item->setText(TbookPress);
+        item->setEnabled(false);
         itemList<<item;
 
         item = new QStandardItem;
@@ -704,6 +706,16 @@ void TWidgetTeacher::do_addBookSum()
 }
 
 void TWidgetTeacher::do_SetBook(){
+    QModelIndex index = ui->queryTabView->currentIndex();
+    int id = index.data(Qt::UserRole+1).toInt();
+
+    TSetBooksDialog *dialog = new TSetBooksDialog(id,ui->queryTabView);
+    dialog->show();
+
+    if(dialog->exec()==QDialog::Accepted){
+        setQueryTabModel(ui->spinPagBook->value());
+    }
+
 
 
 }

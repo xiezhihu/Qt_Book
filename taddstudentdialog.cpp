@@ -11,6 +11,8 @@ TAddStudentDialog::TAddStudentDialog(QWidget *parent)
     , ui(new Ui::TAddStudentDialog)
 {
     ui->setupUi(this);
+    ui->btnIcon->setFixedSize(200,200);
+    ui->btnIcon->setIconSize(ui->btnIcon->size());
     this->setAttribute(Qt::WA_DeleteOnClose);
     this->setModal(true);
     this->setFixedSize(561,382);
@@ -26,6 +28,7 @@ TAddStudentDialog::~TAddStudentDialog()
 void TAddStudentDialog::on_btnIcon_clicked()
 {
     QString fileName = QFileDialog::getOpenFileName(this,"选择一张图片",QCoreApplication::applicationFilePath(),"图片 (*.jpg *.png)");
+    if(fileName.isEmpty())return ;
     QFile file(fileName);
     if(!file.exists()){
         QMessageBox::information(this,"提示","请检查文件是否存在！！！");
@@ -41,6 +44,10 @@ void TAddStudentDialog::on_btnCommite_clicked()
 {
     QString userName = ui->lineName->text();
     QString numberStr = ui->lineNumber->text();
+    if(userName.isEmpty() || numberStr.isEmpty()){
+        QMessageBox::information(this,"提示","姓名、学号不能为空！！！");
+        return ;
+    }
     if(numberStr.length()!=10){
         QMessageBox::information(this,"提示","学号格式有误！！！");
         return ;
@@ -61,12 +68,19 @@ void TAddStudentDialog::on_btnCommite_clicked()
     query->bindValue(":icon",byte);
     query->bindValue(":number",numberStr.toLongLong());
 
-    bool ok = query->exec();
-    if(!ok){
-        QMessageBox::information(this,"提示","添加失败:"+query->lastError().text());
+    query->exec();
+    auto err = query->lastError();
+    if(err.isValid()){
+        if(err.nativeErrorCode() == "1062"){
+            QMessageBox::information(this,"提示","学号已被使用！！！");
+        }else{
+            QMessageBox::information(this,"提示","添加失败:"+err.text());
+        }
         return ;
     }
     QMessageBox::information(this,"提示","添加成功！！！");
-    return this->accept();
+    ui->lineName->clear();
+    ui->lineNumber->clear();
+    ui->btnIcon->setIcon(QIcon(":/icon/icon.png"));
 }
 

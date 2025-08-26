@@ -47,6 +47,7 @@ else()
             twidgetteacher.h twidgetteacher.cpp twidgetteacher.ui
             tmaskdelegate.h tmaskdelegate.cpp
             taddstudentdialog.h taddstudentdialog.cpp taddstudentdialog.ui
+            tsetbooksdialog.h tsetbooksdialog.cpp tsetbooksdialog.ui
         )
     endif()
 endif()
