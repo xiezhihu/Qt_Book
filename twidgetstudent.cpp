@@ -48,7 +48,6 @@ TWidgetStudent::~TWidgetStudent()
 // 及时更新数据库
 void TWidgetStudent::do_timeOut()
 {
-    qDebug()<<"对齐";
     QDateTime curTime=QDateTime::currentDateTime();
 
     bool ok=query->exec("SELECT borrow.borrow_id, borrow.return_date, borrow.status"
@@ -469,6 +468,7 @@ void TWidgetStudent::on_btnRepay_clicked()
 
 void TWidgetStudent::setQueryTabModel(int pag)
 {
+    if(pag<1)pag = 1;
     ui->spinPag->setValue(pag);
     int start=(pag-1)*QUERYMAXROW;
     QString sql;
@@ -494,9 +494,14 @@ void TWidgetStudent::setQueryTabModel(int pag)
         sql=QString("SELECT books.image_data, books.title, books.author, books.total_count, books.borrow_count, books.id"
                     " FROM books"
                     " WHERE books.author LIKE :author"
-                      " LIMIT %1,%2").arg(start).arg(QUERYMAXROW);
+                    " LIMIT %1,%2").arg(start).arg(QUERYMAXROW);
         query->prepare(sql);
         query->bindValue(":author","%"+currAuthor+"%");
+        ok=query->exec();
+        if (!query->exec()) {
+            qDebug() << "SQL 执行失败:" << query->lastError().text();
+            qDebug() << "最终 SQL:" << query->lastQuery();
+        }
 
 
     }else if(!currBookName.isEmpty()){

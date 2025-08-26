@@ -24,11 +24,12 @@ private:
     QStandardItemModel *itemModel;
     QHash<int,std::function<void()>> fun;
 
-    void setLoginTableView(int pag);
+    void setLoginTableView(int pag,QString name = QString(),QString number = QString());
     void do_change();
     void do_resetPwd();
     void do_clearDebt();
     void do_delete();
+    void setSpinPagMax(int rowCount);
 
 public:
     explicit TWidgetTeacher(int id,QWidget *parent = nullptr);
@@ -48,6 +49,24 @@ private slots:
     void on_btnCommitMessage_clicked();
 
     void on_btnManagement_clicked();
+
+    void on_btnFirst_clicked();
+
+    void on_btnLast_clicked();
+
+    void on_btnNext_clicked();
+
+    void on_btnEnd_clicked();
+
+    void on_spinPag_valueChanged(int arg1);
+
+    void on_radName_clicked();
+
+    void on_radNumber_clicked();
+
+    void on_btnSearch_clicked();
+
+    void on_lineSearch_textChanged(const QString &arg1);
 
 private:
     Ui::TWidgetTeacher *ui;

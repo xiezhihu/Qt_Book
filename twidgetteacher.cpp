@@ -6,7 +6,7 @@
 #include <QFileDialog>
 #include <QStandardItemModel>
 #define LOGINMAXCOLOMN 6
-#define LOGINMAXROW 15
+#define LOGINMAXROW 1
 
 
 TWidgetTeacher::TWidgetTeacher(int id,QWidget *parent)
@@ -204,14 +204,63 @@ void TWidgetTeacher::on_btnOk_clicked()
 // 账号管理
 void TWidgetTeacher::on_btnManagement_clicked()
 {
-    setLoginTableView(1);
+    query->prepare("SELECT COUNT(*)"
+                   " FROM login"
+                   " WHERE role = 'STUDENT'");
+    bool ok = query->exec();
+    if(!ok){
+        QMessageBox::critical(this,"错误","初始化失败:"+query->lastError().text());
+        return ;
+    }
+    query->next();
+    int rowCount = query->value(0).toInt();
+    setSpinPagMax(rowCount);
+
+    ui->spinPag->setValue(1);
+    emit ui->spinPag->valueChanged(1); // 触发一下信号，初始化表格
+
+    ui->lineSearch->clear();
 
     ui->stackedWidget->setCurrentIndex(int(WidgetType::Management));
+    ui->radName->setChecked(true);
 }
 
 
-void TWidgetTeacher::setLoginTableView(int pag)
+void TWidgetTeacher::setLoginTableView(int pag,QString username, QString number)
 {
+    if(pag<1) pag = 1;
+    int start=(pag-1)*LOGINMAXROW;
+
+    if(!username.isEmpty()){
+
+
+        QString sql = QString("SELECT username, number, role, id"
+                " FROM login"
+                " WHERE role = 'STUDENT'"
+                " AND username LIKE :username"
+                " LIMIT %1,%2").arg(start).arg(LOGINMAXROW);
+        query->prepare(sql);
+        query->bindValue(":username","%"+username+"%");
+
+    }else if (!number.isEmpty()){
+        QString sql = QString("SELECT username, number, role, id"
+                      " FROM login"
+                      " WHERE role = 'STUDENT'"
+                      " AND number = :number"
+                      " LIMIT %1,%2").arg(start).arg(LOGINMAXROW);
+        query->prepare(sql);
+        query->bindValue(":number",number.toLongLong());
+
+    }else{
+        QString sql=QString("SELECT username, number, role, id"
+                              " FROM login"
+                              " WHERE role = 'STUDENT'"
+                              " LIMIT %1,%2").arg(start).arg(LOGINMAXROW);
+        query->prepare(sql);
+
+    }
+
+
     // model/view
     itemModel = new QStandardItemModel(0,LOGINMAXCOLOMN);
     TMaskDelegate *mask= new TMaskDelegate(this);
@@ -221,10 +270,7 @@ void TWidgetTeacher::setLoginTableView(int pag)
     strList<<"姓名"<<"学号"<<"修改"<<"重置密码"<<"清除欠款"<<"删除";
     itemModel->setHorizontalHeaderLabels(strList);
 
-    QString sql=QString("SELECT username, number, role, id"
-                          " FROM login"
-                          " WHERE role = 'STUDENT'");
-    bool ok=query->exec(sql);
+    bool ok=query->exec();
 
     if(!ok){
         QMessageBox::critical(this,"错误","初始化失败:"+query->lastError().text());
@@ -361,10 +407,117 @@ void TWidgetTeacher::do_delete()
     }
 
     QMessageBox::information(this,"提示","删除成功");
-    itemModel->removeRow(index.row());
+    ui->btnSearch->click();
 }
 
-// 8.24 完成了"超链接"
+void TWidgetTeacher::setSpinPagMax(int rowCount)
+{
+    int pags = rowCount/LOGINMAXROW;
+    ui->labSum->setText(QString("页,共%1页").arg(rowCount%LOGINMAXROW?pags+1:pags));
+    ui->spinPag->setMaximum(rowCount%LOGINMAXROW?pags+1:pags);
+
+}
 
 
+
+// 首页
+void TWidgetTeacher::on_btnFirst_clicked()
+{
+    ui->spinPag->setValue(1);
+}
+
+// 上一页
+void TWidgetTeacher::on_btnLast_clicked()
+{
+    ui->spinPag->setValue(ui->spinPag->value()-1);
+}
+
+// 下一页
+void TWidgetTeacher::on_btnNext_clicked()
+{
+    ui->spinPag->setValue(ui->spinPag->value()+1);
+}
+
+// 尾页
+void TWidgetTeacher::on_btnEnd_clicked()
+{
+    ui->spinPag->setValue(ui->spinPag->maximum());
+}
+
+
+void TWidgetTeacher::on_spinPag_valueChanged(int arg1)
+{
+    ui->btnFirst->setEnabled(arg1!=ui->spinPag->minimum());
+    ui->btnLast->setEnabled(arg1!=ui->spinPag->minimum());
+    ui->btnNext->setEnabled(arg1!=ui->spinPag->maximum());
+    ui->btnEnd->setEnabled(arg1!=ui->spinPag->maximum());
+    QString str=ui->lineSearch->text();
+    if(ui->radName->isChecked()){
+        setLoginTableView(arg1,str);
+    }else{
+
+        setLoginTableView(arg1,QString(),str);
+    }
+}
+
+// 姓名
+void TWidgetTeacher::on_radName_clicked()
+{
+    ui->lineSearch->clear();
+    ui->spinPag->setValue(1);
+
+}
+
+// 学号
+void TWidgetTeacher::on_radNumber_clicked()
+{
+    ui->lineSearch->clear();
+    ui->spinPag->setValue(1);
+}
+
+// 点击搜索
+void TWidgetTeacher::on_btnSearch_clicked()
+{
+    QString str = ui->lineSearch->text();
+
+    if(ui->radName->isChecked()){
+        query->prepare("SELECT COUNT(*)"
+                       " FROM login"
+                       " WHERE role = 'STUDENT'"
+                       " AND username LIKE :str");
+        query->bindValue(":str","%"+str+"%");
+        bool ok=query->exec();
+        if(!ok){
+            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+            return ;
+        }
+        query->next();
+        int rowCount = query->value(0).toInt();
+        setSpinPagMax(rowCount);
+
+        setLoginTableView(ui->spinPag->value(),str);
+    }else{
+
+        query->prepare("SELECT COUNT(*)"
+                       " FROM login"
+                       " WHERE role = 'STUDENT'"
+                       " AND number = :str");
+        query->bindValue(":str",str.toLongLong());
+        bool ok=query->exec();
+        if(!ok){
+            QMessageBox::critical(this,"错误","查询失败:"+query->lastError().text());
+            return ;
+        }
+        query->next();
+        int rowCount = query->value(0).toInt();
+        setSpinPagMax(rowCount);
+        setLoginTableView(ui->spinPag->value(),QString(),str);
+    }
+}
+
+
+void TWidgetTeacher::on_lineSearch_textChanged(const QString &arg1)
+{
+    ui->btnSearch->click();
+}
 

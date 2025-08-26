@@ -618,7 +618,10 @@
      <widget class="QWidget" name="page_2">
       <layout class="QVBoxLayout" name="verticalLayout_11">
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_16" stretch="1,2">
+        <layout class="QHBoxLayout" name="horizontalLayout_16" stretch="1,0,2">
+         <property name="spacing">
+          <number>0</number>
+         </property>
          <item>
           <layout class="QHBoxLayout" name="horizontalLayout_15" stretch="0,0">
            <property name="spacing">
@@ -642,6 +645,16 @@
             </widget>
            </item>
           </layout>
+         </item>
+         <item>
+          <widget class="QPushButton" name="btnAddStudent">
+           <property name="text">
+            <string>添加学生</string>
+           </property>
+           <property name="flat">
+            <bool>true</bool>
+           </property>
+          </widget>
          </item>
          <item>
           <spacer name="horizontalSpacer_8">
@@ -743,10 +756,13 @@
            <property name="buttonSymbols">
             <enum>QAbstractSpinBox::NoButtons</enum>
            </property>
+           <property name="minimum">
+            <number>1</number>
+           </property>
           </widget>
          </item>
          <item>
-          <widget class="QLabel" name="labSun">
+          <widget class="QLabel" name="labSum">
            <property name="text">
             <string>页，共10页</string>
            </property>
