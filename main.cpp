@@ -28,8 +28,11 @@ int main(int argc, char *argv[])
 
             }
             qDebug()<<"登陆成功";
-        }else if(res==QDialog::Rejected){
-            qDebug()<<"登陆失败";
+            return a.exec();
         }
-        return a.exec();
+
+        qDebug()<<"登陆失败";
+        return 0;
+
+
 }
