@@ -538,7 +538,6 @@ void TWidgetTeacher::on_lineSearch_textChanged(const QString &arg1)
 void TWidgetTeacher::on_btnAddStudent_clicked()
 {
     TAddStudentDialog *dialog = new TAddStudentDialog(ui->loginTableView);
-    dialog->show();
     dialog->exec(); // 阻塞程序
     ui->btnSearch->click(); // 刷新数据
 }
@@ -710,7 +709,6 @@ void TWidgetTeacher::do_SetBook(){
     int id = index.data(Qt::UserRole+1).toInt();
 
     TSetBooksDialog *dialog = new TSetBooksDialog(id,ui->queryTabView);
-    dialog->show();
 
     if(dialog->exec()==QDialog::Accepted){
         setQueryTabModel(ui->spinPagBook->value());

@@ -592,7 +592,6 @@ void TWidgetStudent::setQueryTabModel(int pag)
             QModelIndex index=ui->queryTabView->currentIndex();
             int TbookID=index.data(Qt::UserRole+1).toInt();
             QueryDetailDialog *detailDialog = new QueryDetailDialog(TbookID,this->id,ui->queryTabView);
-            detailDialog->show();
             if(detailDialog->exec()==QDialog::Accepted){
                 setQueryTabModel(pag);
             }

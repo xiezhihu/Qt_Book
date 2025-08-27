@@ -10,7 +10,6 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
 
         Dialog w;
-        w.show();
         int res=w.exec();
         if(res==QDialog::Accepted){
             Dialog::Role type=w.roleType();
@@ -32,5 +31,5 @@ int main(int argc, char *argv[])
         }else if(res==QDialog::Rejected){
             qDebug()<<"登陆失败";
         }
-    return a.exec();
+        return a.exec();
 }
