@@ -304,6 +304,10 @@ void TWidgetStudent::on_btnMessageSetIcon_clicked()
 // 保存修改
 void TWidgetStudent::on_btnMessageSave_clicked()
 {
+    if(ui->lineMessageNumber->text().length()<10 || ui->lineMessageNumber->text()[0]=='0'){
+        QMessageBox::information(this,"提示","学号格式有误！！！");
+        return ;
+    }
     // 准备数据
     QString Tname=ui->lineMessageName->text();
     qint64 Tnumber=ui->lineMessageNumber->text().toLongLong();

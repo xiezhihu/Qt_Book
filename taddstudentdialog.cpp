@@ -42,6 +42,10 @@ void TAddStudentDialog::on_btnIcon_clicked()
 
 void TAddStudentDialog::on_btnCommite_clicked()
 {
+    if(ui->lineNumber->text().length()<10 || ui->lineNumber->text()[0]=='0'){
+        QMessageBox::information(this,"提示","学号格式有误！！！");
+        return ;
+    }
     QString userName = ui->lineName->text();
     QString numberStr = ui->lineNumber->text();
     if(userName.isEmpty() || numberStr.isEmpty()){
