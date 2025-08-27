@@ -1,8 +1,13 @@
 <RCC>
     <qresource prefix="/icon">
         <file>1.png</file>
-        <file>2.png</file>
         <file>Search.png</file>
         <file>icon.png</file>
+        <file>book.png</file>
+        <file>bookshelf.png</file>
+        <file>pexels-pixabay-531880.jpg</file>
+        <file>Dull.jpg</file>
+        <file>placeholder.png</file>
+        <file>Subu.jpg</file>
     </qresource>
 </RCC>

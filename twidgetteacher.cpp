@@ -23,6 +23,7 @@ TWidgetTeacher::TWidgetTeacher(int id,QWidget *parent)
     DB = QSqlDatabase::database();
     query = new QSqlQuery(DB);
 
+    // 初始化函数指针哈希表
     fun[2] = [this](){do_change();};
     fun[3] = [this](){do_resetPwd();};
     fun[4] = [this](){do_clearDebt();};
@@ -538,9 +539,8 @@ void TWidgetTeacher::on_btnAddStudent_clicked()
 {
     TAddStudentDialog *dialog = new TAddStudentDialog(ui->loginTableView);
     dialog->show();
-    dialog->exec();
-    ui->btnSearch->click();
-
+    dialog->exec(); // 阻塞程序
+    ui->btnSearch->click(); // 刷新数据
 }
 
 
@@ -982,5 +982,17 @@ void TWidgetTeacher::on_lineSearchBook_textChanged(const QString &arg1)
     ui->btnSearchBook->click();
 }
 
+
+
+// 退出
+void TWidgetTeacher::on_btnQuit_clicked()
+{
+    QMessageBox::StandardButton rec  = QMessageBox::question(this,"提示","是否要退出？");
+    if(rec == QMessageBox::StandardButton::No){
+        return ;
+    }
+    this->close();
+
+}
 
 

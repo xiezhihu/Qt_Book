@@ -12,16 +12,6 @@ Dialog::Dialog(QWidget *parent)
     this->setFixedSize(1091,826);
 
 
-    ui->frameLogin->setStyleSheet(
-        "QFrame {"
-        "border-image: url(:/icon/2.png) 0 0 0 0 stretch stretch;"
-        "}"
-        );
-    ui->frame->setStyleSheet(
-        "QFrame {"
-        "border-image: url(:/icon/1.png) 0 0 0 0 stretch stretch;"
-        "}"
-        );
 }
 
 Dialog::~Dialog()

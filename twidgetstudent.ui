@@ -31,6 +31,11 @@
    </property>
    <item>
     <widget class="QGroupBox" name="groupBox">
+     <property name="styleSheet">
+      <string notr="true">        QGroupBox {
+        border-image: url(:/icon/bookshelf.png) 0 0 0 0 stretch stretch;
+        }</string>
+     </property>
      <property name="title">
       <string/>
      </property>
@@ -225,8 +230,11 @@
    </item>
    <item>
     <widget class="QTabWidget" name="tabWidget">
+     <property name="styleSheet">
+      <string notr="true"/>
+     </property>
      <property name="currentIndex">
-      <number>0</number>
+      <number>1</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -235,6 +243,11 @@
       <layout class="QVBoxLayout" name="verticalLayout_6" stretch="2,0,4">
        <item>
         <widget class="QGroupBox" name="groupBox_3">
+         <property name="styleSheet">
+          <string notr="true">        QGroupBox {
+        border-image: url(:/icon/pexels-pixabay-531880.jpg) 0 0 0 0 stretch stretch;
+        }</string>
+         </property>
          <property name="title">
           <string/>
          </property>
@@ -362,7 +375,13 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QTableView" name="tableView"/>
+           <widget class="QTableView" name="tableView">
+            <property name="styleSheet">
+             <string notr="true">        QTableView {
+        border-image: url(:/icon/Dull.jpg) 0 0 0 0 stretch stretch;
+        }</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -370,6 +389,9 @@
       </layout>
      </widget>
      <widget class="QWidget" name="tab_3">
+      <property name="styleSheet">
+       <string notr="true"/>
+      </property>
       <attribute name="title">
        <string>信息修改</string>
       </attribute>
@@ -458,8 +480,13 @@
          </item>
          <item>
           <widget class="QStackedWidget" name="stackedWidget">
+           <property name="styleSheet">
+            <string notr="true">        QStackedWidget {
+        border-image: url(:/icon/placeholder.png) 0 0 0 0 stretch stretch;
+        }</string>
+           </property>
            <property name="currentIndex">
-            <number>2</number>
+            <number>0</number>
            </property>
            <widget class="QWidget" name="page">
             <layout class="QVBoxLayout" name="verticalLayout_9" stretch="1,2,1,2,1,1,4,2,1,1">
@@ -652,6 +679,9 @@
                    <pointsize>12</pointsize>
                   </font>
                  </property>
+                 <property name="styleSheet">
+                  <string notr="true"/>
+                 </property>
                  <property name="text">
                   <string>选择头像</string>
                  </property>
@@ -687,8 +717,16 @@
              </item>
              <item>
               <widget class="QPushButton" name="btnMessageSave">
+               <property name="styleSheet">
+                <string notr="true">        QPushButton {
+        border-image: url(:/icon/Subu.jpg)0 0 0 0 stretch stretch;
+        }</string>
+               </property>
                <property name="text">
                 <string>保存修改</string>
+               </property>
+               <property name="flat">
+                <bool>false</bool>
                </property>
               </widget>
              </item>
@@ -829,6 +867,11 @@
              </item>
              <item>
               <widget class="QPushButton" name="btnCommitPwd">
+               <property name="styleSheet">
+                <string notr="true">        QPushButton {
+        border-image: url(:/icon/Subu.jpg) 0 0 0 0 stretch stretch;
+        }</string>
+               </property>
                <property name="text">
                 <string>保存修改</string>
                </property>
@@ -889,6 +932,11 @@
              </item>
              <item>
               <widget class="QPushButton" name="btnRepay">
+               <property name="styleSheet">
+                <string notr="true">        QPushButton {
+        border-image: url(:/icon/Subu.jpg) 0 0 0 0 stretch stretch;
+        }</string>
+               </property>
                <property name="text">
                 <string>一键还款</string>
                </property>
@@ -1002,13 +1050,22 @@
        </item>
        <item>
         <widget class="QStackedWidget" name="queryStackedWidget">
+         <property name="styleSheet">
+          <string notr="true"/>
+         </property>
          <property name="currentIndex">
           <number>0</number>
          </property>
          <widget class="QWidget" name="page_4">
           <layout class="QVBoxLayout" name="verticalLayout_14">
            <item>
-            <widget class="QTableView" name="queryTabView"/>
+            <widget class="QTableView" name="queryTabView">
+             <property name="styleSheet">
+              <string notr="true">        QTableView {
+        border-image: url(:/icon/Dull.jpg) 0 0 0 0 stretch stretch;
+        }</string>
+             </property>
+            </widget>
            </item>
            <item>
             <layout class="QHBoxLayout" name="horizontalLayout_18">

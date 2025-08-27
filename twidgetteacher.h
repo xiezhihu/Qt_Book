@@ -19,7 +19,6 @@ class TWidgetTeacher : public QWidget
     enum class QueryStackWidgetType{
         ShowData=0,Category
     };
-
 private:
     QSqlDatabase DB;
     QSqlQuery *query;
@@ -27,6 +26,7 @@ private:
     QString pwd;
     QStandardItemModel *itemModel;
     QHash<int,std::function<void()>> fun;
+
 
 
     QString currAuthor;
@@ -109,6 +109,8 @@ private slots:
     void on_btnSearchBook_clicked();
 
     void on_lineSearchBook_textChanged(const QString &arg1);
+
+    void on_btnQuit_clicked();
 
 private:
     Ui::TWidgetTeacher *ui;
